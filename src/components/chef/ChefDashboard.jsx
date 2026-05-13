@@ -68,26 +68,62 @@ const ChefDashboard = () => {
   };
 
   // Proteger markItemReady
-  const markItemReady = (orderId, batchId, itemId) => {
-    withLock(async () => {
-      try {
-        checkChef();
-        const order = orders.find(o => o.id === orderId);
-        if (!order) return;
-        const updatedBatches = order.batches.map(batch => {
-          if (batch.batchId !== batchId) return batch;
-          const updatedItems = batch.items.map(item =>
-            item.id === itemId ? { ...item, status: 'ready' } : item
+const markItemReady = (orderId, batchId, itemId, readyQuantity) => {
+  withLock(async () => {
+    try {
+      checkChef();
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const updatedBatches = order.batches.map(batch => {
+        if (batch.batchId !== batchId) return batch;
+
+        const itemIndex = batch.items.findIndex(item => item.id === itemId);
+        if (itemIndex === -1) return batch;
+
+        const item = { ...batch.items[itemIndex] };
+        const quantity = item.quantity || 1;
+        const qtyToMark = Math.min(readyQuantity, quantity);
+
+        if (qtyToMark <= 0) return batch;
+
+        let updatedItems;
+        if (qtyToMark === quantity) {
+          // Todo listo
+          updatedItems = batch.items.map((it, idx) =>
+            idx === itemIndex ? { ...it, status: 'ready' } : it
           );
-          return { ...batch, items: updatedItems };
-        });
-        await updateOrder(orderId, { batches: updatedBatches });
-      } catch (err) {
-        alert(err.message);
-        navigate('/dashboard');
-      }
-    });
-  };
+        } else {
+          // Partir el ítem
+          const readyItem = {
+            ...item,
+            id: Date.now(), // nuevo ID
+            quantity: qtyToMark,
+            status: 'ready'
+          };
+          const pendingItem = {
+            ...item,
+            quantity: quantity - qtyToMark,
+            status: 'pending'
+          };
+          updatedItems = [
+            ...batch.items.slice(0, itemIndex),
+            pendingItem,
+            readyItem,
+            ...batch.items.slice(itemIndex + 1)
+          ];
+        }
+
+        return { ...batch, items: updatedItems };
+      });
+
+      await updateOrder(orderId, { batches: updatedBatches });
+    } catch (err) {
+      alert(err.message);
+      navigate('/dashboard');
+    }
+  });
+};
 
   // Proteger unmarkItemReady
   const unmarkItemReady = (orderId, batchId, itemId) => {

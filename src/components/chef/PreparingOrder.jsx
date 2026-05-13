@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMarkItemReady, onUnmarkItemReady, isLocked }) => {
+  const [readyQuantities, setReadyQuantities] = useState({});
+
+  // Inicializar las cantidades a total cuando batch cambia
+  useEffect(() => {
+    const initial = {};
+    batch.items.forEach(item => {
+      if (item.status === 'pending' && item.quantity > 1) {
+        initial[item.id] = item.quantity;
+      }
+    });
+    setReadyQuantities(initial);
+  }, [batch]);
+
   const formatElapsedTime = (timestamp) => {
     if (!timestamp) return '';
     const diff = Math.floor((Date.now() - timestamp.toDate()) / 1000);
     const minutes = Math.floor(diff / 60);
     return `${minutes} min`;
+  };
+
+  const handleQuantityChange = (itemId, value) => {
+    const qty = parseInt(value) || 1;
+    const max = batch.items.find(i => i.id === itemId)?.quantity || 1;
+    setReadyQuantities(prev => ({ ...prev, [itemId]: Math.min(qty, max) }));
   };
 
   return (
@@ -76,13 +95,34 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={() => onMarkItemReady(orderId, batch.batchId, item.id)}
-                      disabled={isLocked}
-                      className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Marcar listo
-                    </button>
+                    item.quantity > 1 ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="1"
+                          max={item.quantity}
+                          value={readyQuantities[item.id] ?? item.quantity}
+                          onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                          className="w-16 p-1 border border-gray-300 rounded text-sm"
+                          disabled={isLocked}
+                        />
+                        <button
+                          onClick={() => onMarkItemReady(orderId, batch.batchId, item.id, readyQuantities[item.id] ?? item.quantity)}
+                          disabled={isLocked}
+                          className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Marcar listo
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => onMarkItemReady(orderId, batch.batchId, item.id, 1)}
+                        disabled={isLocked}
+                        className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Marcar listo
+                      </button>
+                    )
                   )}
                 </div>
               </div>
