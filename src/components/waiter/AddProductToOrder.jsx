@@ -10,6 +10,7 @@ const AddProductToOrder = () => {
   const { tableId, orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [realTableNumber, setRealTableNumber] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [tempItems, setTempItems] = useState([]);
@@ -19,6 +20,20 @@ const AddProductToOrder = () => {
   // Hooks de permisos y bloqueo
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+
+  // Obtener el número real de la mesa (igual que en OccupyTable)
+  useEffect(() => {
+    const fetchTableNumber = async () => {
+      const tableDoc = await getDoc(doc(db, 'tables', tableId));
+      if (tableDoc.exists()) {
+        setRealTableNumber(tableDoc.data().number);
+      } else {
+        console.error('Mesa no encontrada');
+        navigate('/dashboard');
+      }
+    };
+    fetchTableNumber();
+  }, [tableId, navigate]);
 
   // Cargar la orden actual
   useEffect(() => {
@@ -109,12 +124,12 @@ const AddProductToOrder = () => {
     });
   };
 
-  if (!order || categories.length === 0) return <div className="text-center mt-10">Cargando...</div>;
+  if (!order || categories.length === 0 || realTableNumber === null) return <div className="text-center mt-10">Cargando...</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-4">
       <button onClick={() => navigate(`/view/${tableId}`)} className="text-blue-500 hover:underline mb-4">← Volver</button>
-      <h2 className="text-2xl font-bold mb-2">Agregar productos - Mesa {tableId}</h2>
+      <h2 className="text-2xl font-bold mb-2">Agregar productos - Mesa {realTableNumber}</h2>
       <div className="mb-4 p-2 bg-gray-100 rounded">
         <strong>Cliente:</strong> {order.clientName}
       </div>

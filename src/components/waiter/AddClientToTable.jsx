@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import { createOrder, getMenuCategories } from '../../services/firestoreService';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
@@ -9,6 +10,7 @@ const AddClientToTable = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
   const [clientName, setClientName] = useState('');
+  const [realTableNumber, setRealTableNumber] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [tempItems, setTempItems] = useState([]);
@@ -18,6 +20,21 @@ const AddClientToTable = () => {
   // Hooks de permisos y bloqueo
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+
+  // Obtener el número real de la mesa (igual que en OccupyTable)
+  useEffect(() => {
+    const fetchTableNumber = async () => {
+      const tableDoc = await getDoc(doc(db, 'tables', tableId));
+      if (tableDoc.exists()) {
+        setRealTableNumber(tableDoc.data().number);
+      } else {
+        console.error('Mesa no encontrada');
+        navigate('/dashboard');
+      }
+    };
+    fetchTableNumber();
+  }, [tableId, navigate]);
+
 
   // Cargar menú desde Firestore
   useEffect(() => {
@@ -67,7 +84,11 @@ const AddClientToTable = () => {
     withLock(async () => {
       try {
         checkWaiter(); // verifica rol, habilitado y servicio abierto
-
+        
+        if (realTableNumber === null) {
+          alert('Error: número de mesa no disponible');
+          return;
+        }
         if (!clientName.trim()) {
           alert('Debes ingresar el nombre del cliente');
           return;
@@ -77,8 +98,8 @@ const AddClientToTable = () => {
           return;
         }
         const orderData = {
-          tableId: parseInt(tableId),
-          tableNumber: parseInt(tableId),
+          tableId: tableId,
+          tableNumber: realTableNumber,
           clientName: clientName.trim(),
           batches: [
             {
@@ -106,12 +127,12 @@ const AddClientToTable = () => {
     });
   };
 
-  if (categories.length === 0) return <div className="text-center mt-10">Cargando menú...</div>;
+  if (categories.length === 0 || realTableNumber === null) return <div className="text-center mt-10">Cargando menú...</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-4">
       <button onClick={() => navigate(`/view/${tableId}`)} className="text-blue-500 hover:underline mb-4">← Volver</button>
-      <h2 className="text-2xl font-bold mb-4">Agregar nueva orden - Mesa {tableId}</h2>
+      <h2 className="text-2xl font-bold mb-4">Agregar nueva orden - Mesa {realTableNumber}</h2>
 
       <div className="mb-4">
         <input
