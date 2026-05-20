@@ -35,7 +35,6 @@ const AddClientToTable = () => {
     fetchTableNumber();
   }, [tableId, navigate]);
 
-
   // Cargar menú desde Firestore
   useEffect(() => {
     const fetchMenu = async () => {
@@ -84,7 +83,7 @@ const AddClientToTable = () => {
     withLock(async () => {
       try {
         checkWaiter(); // verifica rol, habilitado y servicio abierto
-        
+
         if (realTableNumber === null) {
           alert('Error: número de mesa no disponible');
           return;
@@ -163,16 +162,20 @@ const AddClientToTable = () => {
         {sortedProducts.map(product => (
           <div key={product.id} className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-center mb-2">
-              {currentCategory.imageUrl ? (
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-20 h-20 object-cover rounded-full"
+                />
+              ) : currentCategory?.imageUrl ? (
                 <img
                   src={currentCategory.imageUrl}
                   alt={product.name}
                   className="w-20 h-20 object-cover rounded-full"
                 />
               ) : (
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl">
-                  🍽️
-                </div>
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl">X</div>
               )}
             </div>
             <h4 className="font-semibold text-center">{product.name}</h4>

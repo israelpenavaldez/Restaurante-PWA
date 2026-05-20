@@ -21,6 +21,7 @@ const EditCategory = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVariant, setUploadingVariant] = useState(false); // imagen de la variante
 
   // Cargar categoría existente o inicializar nueva
   useEffect(() => {
@@ -39,7 +40,7 @@ const EditCategory = () => {
         setDescription(data.description || '');
         setImageUrl(data.imageUrl || '');
         setIsActive(data.active !== false);
-        setVariants(data.items || []);
+        setVariants(variants);
       } else {
         alert('Categoría no encontrada');
         navigate('/dashboard', { state: { activeTab: 'menu' } });
@@ -57,7 +58,7 @@ const EditCategory = () => {
     }
   }, [variantId, variants]);
 
-  // Subir imagen a ImgBB
+  // Subir imagen a ImgBB (para categoría)
   const uploadToImgBB = async (file) => {
     const formData = new FormData();
     formData.append('image', file);
@@ -85,6 +86,22 @@ const EditCategory = () => {
       alert('No se pudo subir la imagen');
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Subir imagen a ImgBB (para variante)
+  const handleVariantImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingVariant(true);
+    try {
+      const url = await uploadToImgBB(file);
+      setActiveVariant({ ...activeVariant, imageUrl: url });
+    } catch (error) {
+      console.error(error);
+      alert('No se pudo subir la imagen');
+    } finally {
+      setUploadingVariant(false);
     }
   };
 
@@ -126,6 +143,7 @@ const EditCategory = () => {
       price: 0,
       description: '',
       active: true,
+      imageUrl: '',
     };
     setVariants([...variants, newVariant]);
     setActiveVariant(newVariant);
@@ -229,6 +247,38 @@ const EditCategory = () => {
           {activeVariant && (
             <div className="bg-gray-50 p-4 rounded mb-4">
               <h4 className="font-semibold mb-2">Editando variante</h4>
+              
+              {/* Imagen de la variante */}
+              <div className="mb-3 flex items-start space-x-4">
+                <div className="w-20 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                  <img
+                    src={activeVariant.imageUrl || 'https://via.placeholder.com/80?text=Sin+imagen'}
+                    alt={activeVariant.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="bg-blue-500 text-white px-3 py-1 rounded text-xs cursor-pointer inline-block">
+                    {uploadingVariant ? 'Subiendo...' : 'Subir imagen'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleVariantImageUpload}
+                      className="hidden"
+                      disabled={uploadingVariant}
+                    />
+                  </label>
+                  {activeVariant.imageUrl && (
+                    <button
+                      onClick={() => setActiveVariant({ ...activeVariant, imageUrl: '' })}
+                      className="bg-red-500 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Quitar imagen
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <input
                   type="text"
@@ -282,13 +332,23 @@ const EditCategory = () => {
           <ul className="space-y-2">
             {variants.map(variant => (
               <li key={variant.id} className="flex justify-between items-center border-b pb-2">
-                <div>
-                  <span className={variant.active === false ? 'line-through text-gray-400' : ''}>
-                    {variant.name} - ${variant.price}
-                  </span>
-                  {variant.description && (
-                    <div className="text-xs text-gray-500">{variant.description}</div>
-                  )}
+                <div className="flex items-center space-x-3">
+                  {/* Miniatura de la variante */}
+                  <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                    {variant.imageUrl ? (
+                      <img src={variant.imageUrl} alt={variant.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">X</div>
+                    )}
+                  </div>
+                  <div>
+                    <span className={variant.active === false ? 'line-through text-gray-400' : ''}>
+                      {variant.name} - ${variant.price}
+                    </span>
+                    {variant.description && (
+                      <div className="text-xs text-gray-500">{variant.description}</div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-x-2">
                   <button

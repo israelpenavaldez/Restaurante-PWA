@@ -68,7 +68,7 @@ const AdminMenu = () => {
                 {category.imageUrl ? (
                   <img src={category.imageUrl} alt={category.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-4xl">🍽️</span>
+                  <span className="text-4xl">X</span>
                 )}
               </div>
               <div className="flex-1 p-4">

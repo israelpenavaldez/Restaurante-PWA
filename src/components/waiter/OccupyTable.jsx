@@ -21,7 +21,7 @@ const OccupyTable = () => {
   const [productQuantities, setProductQuantities] = useState({});
   const [productNotes, setProductNotes] = useState({});
   const [loadingMenu, setLoadingMenu] = useState(true);
-  const [realTableNumber, setRealTableNumber] = useState(null); // número real de la mesa
+  const [realTableNumber, setRealTableNumber] = useState(null);
 
   // 1. Obtener el número real de la mesa desde Firestore
   useEffect(() => {
@@ -49,7 +49,7 @@ const OccupyTable = () => {
     fetchMenu();
   }, []);
 
-  // 3. Inicializar primer cliente (con nombre automático)
+  // 3. Inicializar primer cliente
   useEffect(() => {
     if (clients.length === 0 && !loadingMenu && realTableNumber !== null) {
       const now = new Date();
@@ -70,7 +70,7 @@ const OccupyTable = () => {
     }
   }, [loadingMenu, realTableNumber, clients.length]);
 
-  // 4. Agregar cliente adicional (nombre obligatorio)
+  // 4. Agregar cliente adicional
   const handleAddClient = () => {
     const newName = prompt('Ingrese el nombre del nuevo cliente (obligatorio):');
     if (!newName || newName.trim() === '') {
@@ -121,11 +121,11 @@ const OccupyTable = () => {
     ));
   };
 
-  // 5. Enviar órdenes a cocina con protección de permisos y bloqueo de doble clic
+  // 5. Enviar órdenes a cocina
   const handleSubmit = () => {
     withLock(async () => {
       try {
-        checkWaiter(); // lanza error si no es mesero, está deshabilitado o servicio cerrado
+        checkWaiter();
 
         if (realTableNumber === null) {
           alert('Error: número de mesa no disponible');
@@ -149,7 +149,6 @@ const OccupyTable = () => {
           if (client.name && client.name.trim() !== '') {
             finalClientName = client.name.trim();
           } else {
-            // Solo para el primer cliente (único) usamos el nombre generado automáticamente
             finalClientName = `M${realTableNumber}-${new Date().toLocaleString().replace(/[\/:,]/g, '-')}`;
           }
           const orderData = {
@@ -252,14 +251,20 @@ const OccupyTable = () => {
         {sortedProducts.map(product => (
           <div key={product.id} className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-center mb-2">
-              {currentCategory?.imageUrl ? (
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-20 h-20 object-cover rounded-full"
+                />
+              ) : currentCategory?.imageUrl ? (
                 <img
                   src={currentCategory.imageUrl}
                   alt={product.name}
                   className="w-20 h-20 object-cover rounded-full"
                 />
               ) : (
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl">🍽️</div>
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl">X</div>
               )}
             </div>
             <h4 className="font-semibold text-center">{product.name}</h4>

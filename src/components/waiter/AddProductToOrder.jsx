@@ -21,7 +21,7 @@ const AddProductToOrder = () => {
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
 
-  // Obtener el número real de la mesa (igual que en OccupyTable)
+  // Obtener el número real de la mesa
   useEffect(() => {
     const fetchTableNumber = async () => {
       const tableDoc = await getDoc(doc(db, 'tables', tableId));
@@ -96,7 +96,7 @@ const AddProductToOrder = () => {
   const handleSubmit = () => {
     withLock(async () => {
       try {
-        checkWaiter(); // verifica rol, habilitado y servicio abierto
+        checkWaiter();
 
         if (tempItems.length === 0) {
           alert('Agrega al menos un producto');
@@ -153,16 +153,20 @@ const AddProductToOrder = () => {
         {sortedProducts.map(product => (
           <div key={product.id} className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-center mb-2">
-              {currentCategory.imageUrl ? (
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-20 h-20 object-cover rounded-full"
+                />
+              ) : currentCategory?.imageUrl ? (
                 <img
                   src={currentCategory.imageUrl}
                   alt={product.name}
                   className="w-20 h-20 object-cover rounded-full"
                 />
               ) : (
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl">
-                  🍽️
-                </div>
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl">X</div>
               )}
             </div>
             <h4 className="font-semibold text-center">{product.name}</h4>
