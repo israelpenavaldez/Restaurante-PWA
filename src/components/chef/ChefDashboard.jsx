@@ -6,6 +6,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import PendingOrders from './PendingOrders';
 import PreparingOrder from './PreparingOrder';
+import Button from '../ui/Button';
 
 const ChefDashboard = () => {
   const [activeTab, setActiveTab] = useState('pending');
@@ -17,7 +18,6 @@ const ChefDashboard = () => {
   const { checkChef } = usePermissions();
   const { withLock, isLocked } = useActionLock();
 
-  // Suscripción a todas las órdenes (en tiempo real)
   useEffect(() => {
     const unsubscribe = subscribeToAllOrders((allOrders) => {
       setOrders(allOrders);
@@ -31,7 +31,6 @@ const ChefDashboard = () => {
     navigate('/login');
   };
 
-  // Aplanar los lotes
   const allBatches = orders.flatMap(order =>
     (order.batches || []).map(batch => ({
       orderId: order.id,
@@ -49,7 +48,6 @@ const ChefDashboard = () => {
   const preparingBatches = allBatches.filter(b => b.batch.status === 'preparing');
   preparingBatches.sort((a, b) => a.batch.timestamp.toDate() - b.batch.timestamp.toDate());
 
-  // Proteger startPreparing
   const startPreparing = (orderId, batchId) => {
     withLock(async () => {
       try {
@@ -67,65 +65,47 @@ const ChefDashboard = () => {
     });
   };
 
-  // Proteger markItemReady
-const markItemReady = (orderId, batchId, itemId, readyQuantity) => {
-  withLock(async () => {
-    try {
-      checkChef();
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
+  const markItemReady = (orderId, batchId, itemId, readyQuantity) => {
+    withLock(async () => {
+      try {
+        checkChef();
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
 
-      const updatedBatches = order.batches.map(batch => {
-        if (batch.batchId !== batchId) return batch;
+        const updatedBatches = order.batches.map(batch => {
+          if (batch.batchId !== batchId) return batch;
+          const itemIndex = batch.items.findIndex(item => item.id === itemId);
+          if (itemIndex === -1) return batch;
+          const item = { ...batch.items[itemIndex] };
+          const quantity = item.quantity || 1;
+          const qtyToMark = Math.min(readyQuantity, quantity);
+          if (qtyToMark <= 0) return batch;
 
-        const itemIndex = batch.items.findIndex(item => item.id === itemId);
-        if (itemIndex === -1) return batch;
+          let updatedItems;
+          if (qtyToMark === quantity) {
+            updatedItems = batch.items.map((it, idx) =>
+              idx === itemIndex ? { ...it, status: 'ready' } : it
+            );
+          } else {
+            const readyItem = { ...item, id: Date.now(), quantity: qtyToMark, status: 'ready' };
+            const pendingItem = { ...item, quantity: quantity - qtyToMark, status: 'pending' };
+            updatedItems = [
+              ...batch.items.slice(0, itemIndex),
+              pendingItem,
+              readyItem,
+              ...batch.items.slice(itemIndex + 1)
+            ];
+          }
+          return { ...batch, items: updatedItems };
+        });
+        await updateOrder(orderId, { batches: updatedBatches });
+      } catch (err) {
+        alert(err.message);
+        navigate('/dashboard');
+      }
+    });
+  };
 
-        const item = { ...batch.items[itemIndex] };
-        const quantity = item.quantity || 1;
-        const qtyToMark = Math.min(readyQuantity, quantity);
-
-        if (qtyToMark <= 0) return batch;
-
-        let updatedItems;
-        if (qtyToMark === quantity) {
-          // Todo listo
-          updatedItems = batch.items.map((it, idx) =>
-            idx === itemIndex ? { ...it, status: 'ready' } : it
-          );
-        } else {
-          // Partir el ítem
-          const readyItem = {
-            ...item,
-            id: Date.now(), // nuevo ID
-            quantity: qtyToMark,
-            status: 'ready'
-          };
-          const pendingItem = {
-            ...item,
-            quantity: quantity - qtyToMark,
-            status: 'pending'
-          };
-          updatedItems = [
-            ...batch.items.slice(0, itemIndex),
-            pendingItem,
-            readyItem,
-            ...batch.items.slice(itemIndex + 1)
-          ];
-        }
-
-        return { ...batch, items: updatedItems };
-      });
-
-      await updateOrder(orderId, { batches: updatedBatches });
-    } catch (err) {
-      alert(err.message);
-      navigate('/dashboard');
-    }
-  });
-};
-
-  // Proteger unmarkItemReady
   const unmarkItemReady = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
@@ -147,34 +127,44 @@ const markItemReady = (orderId, batchId, itemId, readyQuantity) => {
     });
   };
 
-  if (loading) return <div className="text-center mt-10">Cargando órdenes...</div>;
+  if (loading) return <div className="text-center mt-10 text-tierra-clara font-body">Cargando órdenes...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-crema">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-hueso shadow-md border-b border-barro-claro/30">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Panel de Cocina</h1>
+          <h1 className="text-2xl font-display font-bold text-chocolate-oscuro">Panel de Cocina</h1>
           <div className="flex items-center space-x-4">
-            <span>{userData?.displayName || userData?.email} (Cocinero)</span>
-            <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded-md">Cerrar sesión</button>
+            <span className="text-chocolate-oscuro font-medium">{userData?.displayName || userData?.email} (Cocinero)</span>
+            <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
+              Cerrar sesión
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Pestañas */}
-      <div className="border-b bg-white">
+      <div className="border-b border-barro-claro/30 bg-hueso">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveTab('pending')}
-              className={`py-2 ${activeTab === 'pending' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition ${
+                activeTab === 'pending'
+                  ? 'border-chile-guajillo text-chile-guajillo'
+                  : 'border-transparent text-tierra-clara hover:text-chocolate-oscuro hover:border-barro-claro'
+              }`}
             >
               Pendiente ({pendingBatches.length})
             </button>
             <button
               onClick={() => setActiveTab('preparing')}
-              className={`py-2 ${activeTab === 'preparing' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+              className={`py-3 px-1 border-b-2 font-medium text-sm transition ${
+                activeTab === 'preparing'
+                  ? 'border-chile-guajillo text-chile-guajillo'
+                  : 'border-transparent text-tierra-clara hover:text-chocolate-oscuro hover:border-barro-claro'
+              }`}
             >
               En preparación ({preparingBatches.length})
             </button>
@@ -207,7 +197,9 @@ const markItemReady = (orderId, batchId, itemId, readyQuantity) => {
               />
             ))}
             {preparingBatches.length === 0 && (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">No hay lotes en preparación.</div>
+              <div className="bg-hueso rounded-2xl shadow-md p-8 text-center text-tierra-clara border border-barro-claro/20">
+                No hay lotes en preparación.
+              </div>
             )}
           </div>
         )}
