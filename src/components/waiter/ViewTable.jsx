@@ -5,6 +5,9 @@ import { db } from '../../firebase/config';
 import { subscribeToTableOrders, updateOrder } from '../../services/firestoreService';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
 
 const ViewTable = () => {
   const { tableId } = useParams();
@@ -14,11 +17,9 @@ const ViewTable = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Hooks de permisos y bloqueo
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
 
-  // 1. Obtener el número real de la mesa (solo para mostrar)
   useEffect(() => {
     const fetchTableNumber = async () => {
       const tableDoc = await getDoc(doc(db, 'tables', tableId));
@@ -32,7 +33,6 @@ const ViewTable = () => {
     fetchTableNumber();
   }, [tableId, navigate]);
 
-  // 2. Suscripción a órdenes usando el número real (cuando esté disponible)
   useEffect(() => {
     if (realTableNumber === null) return;
     const unsubscribe = subscribeToTableOrders(realTableNumber, (allOrders) => {
@@ -43,15 +43,12 @@ const ViewTable = () => {
     return () => unsubscribe();
   }, [realTableNumber]);
 
-  // Entregar un producto
   const handleDeliverItem = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
         checkWaiter();
-
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
-
         const updatedBatches = order.batches.map(batch => {
           if (batch.batchId !== batchId) return batch;
           const updatedItems = batch.items.map(item =>
@@ -66,7 +63,6 @@ const ViewTable = () => {
           updatedBatch.status = 'delivered';
           updatedBatch.deliveredAt = Timestamp.now();
         }
-
         const allBatchesDelivered = updatedBatches.every(batch => batch.status === 'delivered');
         let updatedOrderStatus = order.status;
         let deliveredAt = order.deliveredAt;
@@ -74,12 +70,7 @@ const ViewTable = () => {
           updatedOrderStatus = 'delivered';
           if (!deliveredAt) deliveredAt = Timestamp.now();
         }
-
-        await updateOrder(orderId, {
-          batches: updatedBatches,
-          status: updatedOrderStatus,
-          deliveredAt
-        });
+        await updateOrder(orderId, { batches: updatedBatches, status: updatedOrderStatus, deliveredAt });
       } catch (err) {
         alert(err.message);
         navigate('/dashboard');
@@ -87,12 +78,10 @@ const ViewTable = () => {
     });
   };
 
-  // Cancelar un producto
   const handleCancelItem = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
         checkWaiter();
-
         const order = orders.find(o => o.id === orderId);
         if (!order || order.prepaid) {
           alert('No se pueden cancelar productos en una orden prepagada');
@@ -126,13 +115,11 @@ const ViewTable = () => {
         const updatedBatches = order.batches.map(b =>
           b.batchId === batchId ? { ...b, items: updatedItems } : b
         );
-
         const updatedBatch = updatedBatches.find(b => b.batchId === batchId);
         const allItemsCompleted = updatedBatch.items.every(i => i.status === 'delivered' || i.status === 'cancelled');
         if (allItemsCompleted && updatedBatch.status !== 'delivered') {
           updatedBatch.status = 'delivered';
         }
-
         const allBatchesCompleted = updatedBatches.every(b => b.status === 'delivered');
         let updatedOrderStatus = order.status;
         let deliveredAt = order.deliveredAt;
@@ -140,12 +127,7 @@ const ViewTable = () => {
           updatedOrderStatus = 'delivered';
           if (!deliveredAt) deliveredAt = Timestamp.now();
         }
-
-        await updateOrder(orderId, {
-          batches: updatedBatches,
-          status: updatedOrderStatus,
-          deliveredAt
-        });
+        await updateOrder(orderId, { batches: updatedBatches, status: updatedOrderStatus, deliveredAt });
       } catch (err) {
         alert(err.message);
         navigate('/dashboard');
@@ -153,7 +135,6 @@ const ViewTable = () => {
     });
   };
 
-  // Navegaciones con verificación de permisos (sin lock, porque no modifican datos)
   const goToBill = (orderId, type) => {
     try {
       checkWaiter();
@@ -220,95 +201,83 @@ const ViewTable = () => {
   };
 
   if (loading || realTableNumber === null) {
-    return <div className="text-center mt-10">Cargando órdenes...</div>;
+    return <div className="text-center mt-10 text-tierra-clara">Cargando órdenes...</div>;
   }
 
   if (orders.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto p-4">
-        <button onClick={() => navigate('/dashboard')} className="text-blue-500 hover:underline mb-4">← Volver</button>
-        <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-          No hay órdenes activas para esta mesa.
-        </div>
+      <div className="max-w-6xl mx-auto p-4 bg-crema min-h-screen">
+        <button onClick={() => navigate('/dashboard')} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+          ← Volver
+        </button>
+        <Card className="text-center p-8">
+          <p className="text-tierra-clara text-lg">No hay órdenes activas para esta mesa.</p>
+        </Card>
         <div className="flex justify-center mt-8">
-          <button onClick={liberarMesa} disabled={isLocked} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50">
+          <Button variant="primary" onClick={liberarMesa} disabled={isLocked}>
             {isLocked ? 'Procesando...' : 'Liberar mesa'}
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      <button onClick={() => navigate('/dashboard')} className="text-blue-500 hover:underline mb-4">← Volver</button>
-      <h2 className="text-2xl font-bold mb-6">Mesa {realTableNumber} - Órdenes</h2>
+    <div className="max-w-6xl mx-auto p-4 bg-crema min-h-screen">
+      <button onClick={() => navigate('/dashboard')} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+        ← Volver
+      </button>
+      <h2 className="text-3xl font-display font-bold text-chocolate-oscuro mb-6">Mesa {realTableNumber} - Órdenes</h2>
 
       {orders.map(order => {
         const isPrepaid = order.prepaid === true;
         const allFinalized = allItemsFinalized(order);
         return (
-          <div key={order.id} className="bg-white rounded-lg shadow mb-6 p-4">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold">{order.clientName}</h3>
-              <div className="space-x-2">
+          <Card key={order.id} className="mb-6">
+            <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
+              <h3 className="text-2xl font-display font-bold text-chocolate-oscuro">{order.clientName}</h3>
+              <div className="flex flex-wrap gap-2">
                 {!isPrepaid && (
-                  <button
-                    onClick={() => goToAddProduct(order.id)}
-                    disabled={isLocked}
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
-                  >
+                  <Button variant="secondary" onClick={() => goToAddProduct(order.id)} disabled={isLocked} className="text-sm py-1 px-3">
                     Agregar producto
-                  </button>
+                  </Button>
                 )}
                 {!isPrepaid ? (
                   allFinalized ? (
-                    <button
-                      onClick={() => goToBill(order.id, 'final')}
-                      disabled={isLocked}
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:opacity-50"
-                    >
+                    <Button variant="success" onClick={() => goToBill(order.id, 'final')} disabled={isLocked} className="text-sm py-1 px-3">
                       Generar cuenta
-                    </button>
+                    </Button>
                   ) : (
-                    <button
-                      onClick={() => goToBill(order.id, 'prepay')}
-                      disabled={isLocked}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 disabled:opacity-50"
-                    >
+                    <Button variant="warning" onClick={() => goToBill(order.id, 'prepay')} disabled={isLocked} className="text-sm py-1 px-3">
                       Pago anticipado
-                    </button>
+                    </Button>
                   )
                 ) : (
                   allFinalized ? (
-                    <button
-                      onClick={() => handleCloseOrder(order.id)}
-                      disabled={isLocked}
-                      className="bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800 disabled:opacity-50"
-                    >
+                    <Button variant="success" onClick={() => handleCloseOrder(order.id)} disabled={isLocked} className="text-sm py-1 px-3">
                       Cerrar cuenta
-                    </button>
+                    </Button>
                   ) : (
-                    <span className="text-gray-500 italic">Pagado por anticipado</span>
+                    <span className="text-tierra-clara italic self-center">Pagado por anticipado</span>
                   )
                 )}
               </div>
             </div>
 
             {order.batches.map(batch => (
-              <div key={batch.batchId} className="mb-4 border rounded p-2">
-                <div className="bg-gray-100 p-1 text-sm font-medium">
-                  Lote #{batch.batchId} - {batch.timestamp?.toDate().toLocaleTimeString()}
+              <div key={batch.batchId} className="mb-4 border-2 border-dashed border-barro-claro rounded-xl p-3">
+                <div className="bg-barro-claro/20 rounded-lg p-2 text-sm font-medium mb-2 flex justify-between items-center">
+                  <span>Lote #{batch.batchId} - {batch.timestamp?.toDate().toLocaleTimeString()}</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-barro-claro/30">
+                    <thead className="bg-barro-claro/10">
                       <tr>
-                        <th className="px-2 py-1 text-left">Producto</th>
-                        <th className="px-2 py-1 text-left">Cant.</th>
-                        <th className="px-2 py-1 text-left">Precio</th>
-                        <th className="px-2 py-1 text-left">Estado</th>
-                        <th className="px-2 py-1 text-left">Acciones</th>
+                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Producto</th>
+                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Cant.</th>
+                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Precio</th>
+                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Estado</th>
+                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -320,32 +289,23 @@ const ViewTable = () => {
                           <tr key={item.id} className={rowClass}>
                             <td className="px-2 py-1">
                               {item.name}
-                              {item.notes && <div className="text-xs text-gray-500">{item.notes}</div>}
+                              {item.notes && <div className="text-xs text-tierra-clara">{item.notes}</div>}
                             </td>
                             <td className="px-2 py-1">{item.quantity}</td>
                             <td className="px-2 py-1">${item.price}</td>
                             <td className="px-2 py-1">
-                              {item.status === 'pending' && <span className="bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded-full text-xs">Pendiente</span>}
-                              {item.status === 'ready' && <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded-full text-xs">Listo</span>}
-                              {item.status === 'delivered' && <span className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded-full text-xs">Entregado</span>}
-                              {item.status === 'cancelled' && <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded-full text-xs">Cancelado</span>}
+                              <Badge status={item.status} />
                             </td>
                             <td className="px-2 py-1">
                               {item.status === 'ready' && (
-                                <button
-                                  onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)}
-                                  disabled={isLocked}
-                                  className="text-green-600 hover:text-green-800 text-sm disabled:opacity-50"
-                                >
+                                <button onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)} disabled={isLocked}
+                                  className="text-verde-nopal hover:text-green-800 text-sm font-medium disabled:opacity-50">
                                   Entregar
                                 </button>
                               )}
                               {item.status === 'pending' && !isPrepaid && (
-                                <button
-                                  onClick={() => handleCancelItem(order.id, batch.batchId, item.id)}
-                                  disabled={isLocked}
-                                  className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
-                                >
+                                <button onClick={() => handleCancelItem(order.id, batch.batchId, item.id)} disabled={isLocked}
+                                  className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50">
                                   Cancelar
                                 </button>
                               )}
@@ -358,18 +318,14 @@ const ViewTable = () => {
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
         );
       })}
 
       <div className="flex justify-end mt-4">
-        <button
-          onClick={goToAddClient}
-          disabled={isLocked}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-        >
+        <Button variant="primary" onClick={goToAddClient} disabled={isLocked}>
           + Agregar Orden (Cliente)
-        </button>
+        </Button>
       </div>
     </div>
   );
