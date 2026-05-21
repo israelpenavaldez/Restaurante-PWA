@@ -75,74 +75,76 @@ const AdminEmployees = () => {
       )}
 
       <Card className="overflow-hidden !p-0">
-        <table className="min-w-full divide-y divide-barro-claro/30">
-          <thead className="bg-barro-claro/20">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Nombre</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Rol</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Estado</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-barro-claro/20">
-            {employees.map(emp => (
-              <tr key={emp.id} className="text-chocolate-oscuro">
-                <td className="px-6 py-4">{emp.displayName || 'Sin nombre'}</td>
-                <td className="px-6 py-4">{emp.email}</td>
-                <td className="px-6 py-4">
-                  {editingRole === emp.id ? (
-                    <select
-                      value={emp.role}
-                      onChange={e => updateRole(emp.id, e.target.value)}
-                      disabled={isServiceOpen}
-                      className="p-1 border-b-2 border-barro-claro bg-transparent rounded-t-md text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition disabled:opacity-50"
-                    >
-                      <option value="waiter">Mesero</option>
-                      <option value="chef">Cocinero</option>
-                    </select>
-                  ) : (
-                    <span className="capitalize">{emp.role === 'waiter' ? 'Mesero' : emp.role === 'chef' ? 'Cocinero' : emp.role}</span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    emp.enabled ? 'bg-verde-nopal/20 text-green-800' : 'bg-chile-guajillo/10 text-red-800'
-                  }`}>
-                    {emp.enabled ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 space-x-2">
-                  {editingRole === emp.id ? (
-                    <button onClick={() => setEditingRole(null)} className="text-tierra-clara hover:text-chocolate-oscuro text-sm">Cancelar</button>
-                  ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-barro-claro/30">
+            <thead className="bg-barro-claro/20">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Nombre</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-barro-claro/20">
+              {employees.map(emp => (
+                <tr key={emp.id} className="text-chocolate-oscuro">
+                  <td className="px-6 py-4 whitespace-nowrap">{emp.displayName || 'Sin nombre'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{emp.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingRole === emp.id ? (
+                      <select
+                        value={emp.role}
+                        onChange={e => updateRole(emp.id, e.target.value)}
+                        disabled={isServiceOpen}
+                        className="p-1 border-b-2 border-barro-claro bg-transparent rounded-t-md text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition disabled:opacity-50"
+                      >
+                        <option value="waiter">Mesero</option>
+                        <option value="chef">Cocinero</option>
+                      </select>
+                    ) : (
+                      <span className="capitalize">{emp.role === 'waiter' ? 'Mesero' : emp.role === 'chef' ? 'Cocinero' : emp.role}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      emp.enabled ? 'bg-verde-nopal/20 text-green-800' : 'bg-chile-guajillo/10 text-red-800'
+                    }`}>
+                      {emp.enabled ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 space-x-2 whitespace-nowrap">
+                    {editingRole === emp.id ? (
+                      <button onClick={() => setEditingRole(null)} className="text-tierra-clara hover:text-chocolate-oscuro text-sm">Cancelar</button>
+                    ) : (
+                      <button
+                        onClick={() => setEditingRole(emp.id)}
+                        disabled={isServiceOpen}
+                        className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Editar rol
+                      </button>
+                    )}
                     <button
-                      onClick={() => setEditingRole(emp.id)}
+                      onClick={() => toggleStatus(emp.id, emp.enabled)}
+                      disabled={isServiceOpen}
+                      className={`text-sm font-medium ${emp.enabled ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {emp.enabled ? 'Deshabilitar' : 'Habilitar'}
+                    </button>
+                    <button
+                      onClick={() => deleteEmp(emp.id)}
                       disabled={isServiceOpen}
                       className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Editar rol
+                      Eliminar
                     </button>
-                  )}
-                  <button
-                    onClick={() => toggleStatus(emp.id, emp.enabled)}
-                    disabled={isServiceOpen}
-                    className={`text-sm font-medium ${emp.enabled ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {emp.enabled ? 'Deshabilitar' : 'Habilitar'}
-                  </button>
-                  <button
-                    onClick={() => deleteEmp(emp.id)}
-                    disabled={isServiceOpen}
-                    className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
       {employees.length === 0 && <p className="text-tierra-clara text-center mt-8">No hay empleados registrados</p>}
     </div>
