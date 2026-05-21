@@ -149,7 +149,7 @@ const AddProductToOrder = () => {
               ) : currentCategory?.imageUrl ? (
                 <img src={currentCategory.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-barro-claro" />
               ) : (
-                <div className="w-20 h-20 bg-barro-claro/30 rounded-full flex items-center justify-center text-3xl">🍽️</div>
+                <div className="w-20 h-20 bg-barro-claro/30 rounded-full flex items-center justify-center text-3xl">X</div>
               )}
             </div>
             <h4 className="font-display font-bold text-chocolate-oscuro">{product.name}</h4>
