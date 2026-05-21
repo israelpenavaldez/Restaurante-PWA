@@ -69,7 +69,7 @@ const AdminEmployees = () => {
                     <select
                       value={emp.role}
                       onChange={e => updateRole(emp.id, e.target.value)}
-                      className="border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none"
+                      className="p-1 border-b-2 border-barro-claro bg-transparent rounded-t-md text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition"
                     >
                       <option value="waiter">Mesero</option>
                       <option value="chef">Cocinero</option>

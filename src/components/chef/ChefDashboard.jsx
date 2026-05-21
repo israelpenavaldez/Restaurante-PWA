@@ -6,6 +6,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import PendingOrders from './PendingOrders';
 import PreparingOrder from './PreparingOrder';
+import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 const ChefDashboard = () => {
@@ -197,9 +198,9 @@ const ChefDashboard = () => {
               />
             ))}
             {preparingBatches.length === 0 && (
-              <div className="bg-hueso rounded-2xl shadow-md p-8 text-center text-tierra-clara border border-barro-claro/20">
-                No hay lotes en preparación.
-              </div>
+              <Card className="text-center p-8">
+                <p className="text-tierra-clara">No hay lotes en preparación.</p>
+              </Card>
             )}
           </div>
         )}
