@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const SignOut = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+
   useEffect(() => {
     const doLogout = async () => {
       await logout();
@@ -12,7 +13,16 @@ const SignOut = () => {
     };
     doLogout();
   }, [logout, navigate]);
-  return <div className="text-center mt-10">Cerrando sesión...</div>;
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-crema">
+      <div className="text-center">
+        <p className="text-xl text-tierra-clara font-body animate-pulse">
+          Cerrando sesión...
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default SignOut;
