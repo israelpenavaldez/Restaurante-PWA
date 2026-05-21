@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { getRealTotal, isOrderCompletelyCancelled,  } from '../../utils/helpers';
+import { getRealTotal, isOrderCompletelyCancelled } from '../../utils/helpers';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 const AdminHome = () => {
   const [metrics, setMetrics] = useState({
     dailySales: 0,
     ordersAttended: 0,
     averageTicket: 0,
-    topProducts: [],      // { name, category, quantity, total }
+    topProducts: [],
     occupiedTables: 0,
     totalTables: 8,
     isServiceOpen: true,
   });
   const [loading, setLoading] = useState(true);
   const [updatingService, setUpdatingService] = useState(false);
-  const [productSortBy, setProductSortBy] = useState('quantity'); // 'quantity' or 'total'
+  const [productSortBy, setProductSortBy] = useState('quantity');
 
-  // Obtener métricas del día actual (desde 00:00 hasta ahora)
   const fetchDailyMetrics = async () => {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
-
     const startTimestamp = Timestamp.fromDate(startOfDay);
     const endTimestamp = Timestamp.fromDate(endOfDay);
 
@@ -35,19 +35,13 @@ const AdminHome = () => {
     );
     const snapshot = await getDocs(q);
     let ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Calcular total real para cada orden
-    ordersData = ordersData.map(order => ({
-      ...order,
-      realTotal: getRealTotal(order)
-    }));
-    // Excluir órdenes completamente canceladas
+    ordersData = ordersData.map(order => ({ ...order, realTotal: getRealTotal(order) }));
     const validOrders = ordersData.filter(order => !isOrderCompletelyCancelled(order));
 
     const dailySales = validOrders.reduce((sum, order) => sum + order.realTotal, 0);
     const ordersAttended = validOrders.length;
     const averageTicket = ordersAttended > 0 ? dailySales / ordersAttended : 0;
 
-    // Productos más vendidos (agrupando por categoría y nombre)
     const productMap = new Map();
     validOrders.forEach(order => {
       order.batches?.forEach(batch => {
@@ -65,64 +59,51 @@ const AdminHome = () => {
         });
       });
     });
-    const productsArray = Array.from(productMap.values());
-    const sortedProducts = [...productsArray].sort((a, b) => {
+    const sorted = Array.from(productMap.values()).sort((a, b) => {
       if (productSortBy === 'quantity') return b.quantity - a.quantity;
-      else return b.total - a.total;
+      return b.total - a.total;
     });
-    const topProducts = sortedProducts.slice(0, 5);
-
-    return { dailySales, ordersAttended, averageTicket, topProducts };
+    return { dailySales, ordersAttended, averageTicket, topProducts: sorted.slice(0, 5) };
   };
 
   const fetchOccupiedTables = async () => {
-    const tablesSnapshot = await getDocs(collection(db, 'tables'));
-    const tables = tablesSnapshot.docs.map(doc => doc.data());
-    return tables.filter(table => table.status === 'occupied').length;
+    const snapshot = await getDocs(collection(db, 'tables'));
+    return snapshot.docs.map(doc => doc.data()).filter(table => table.status === 'occupied').length;
+  };
+
+  const fetchTotalTables = async () => {
+    const snapshot = await getDocs(collection(db, 'tables'));
+    return snapshot.size;
   };
 
   const fetchConfig = async () => {
     const configDoc = await getDoc(doc(db, 'config', 'settings'));
-    if (configDoc.exists()) {
-      return configDoc.data();
-    }
-    return { totalTables: 8, isServiceOpen: true };
-  };
-
-  // Contar todas las mesas
-  const fetchTotalTables = async () => {
-    const tablesSnapshot = await getDocs(collection(db, 'tables'));
-    return tablesSnapshot.size; // número total de documentos
+    return configDoc.exists() ? configDoc.data() : { isServiceOpen: true };
   };
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [dailyMetrics, occupiedTables, totalTables, config] = await Promise.all([
+        const [dailyMetrics, occupied, total, config] = await Promise.all([
           fetchDailyMetrics(),
           fetchOccupiedTables(),
           fetchTotalTables(),
           fetchConfig(),
         ]);
-        setMetrics({
-          ...dailyMetrics,
-          occupiedTables,
-          totalTables,
-          isServiceOpen: config.isServiceOpen,
-        });
+        setMetrics({ ...dailyMetrics, occupiedTables: occupied, totalTables: total, isServiceOpen: config.isServiceOpen });
       } catch (error) {
-        console.error('Error cargando métricas:', error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [productSortBy]); // Recargar cuando cambie el orden de productos
+  }, [productSortBy]);
 
   const toggleServiceStatus = async () => {
     if (metrics.isServiceOpen && metrics.occupiedTables > 0) {
-      alert(`No se puede cerrar el servicio porque hay ${metrics.occupiedTables} mesa(s) ocupada(s).`);
+      alert(`No se puede cerrar porque hay ${metrics.occupiedTables} mesa(s) ocupada(s).`);
       return;
     }
     setUpdatingService(true);
@@ -138,82 +119,81 @@ const AdminHome = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10">Cargando métricas...</div>;
+  if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando métricas...</div>;
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Resumen del día</h2>
-        <button
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-display font-bold text-chocolate-oscuro">Resumen del día</h2>
+        <Button
+          variant={metrics.isServiceOpen ? 'success' : 'primary'}
           onClick={toggleServiceStatus}
           disabled={updatingService}
-          className={`px-4 py-2 rounded text-white ${metrics.isServiceOpen ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
         >
           {metrics.isServiceOpen ? '🔓 Servicio abierto' : '🔒 Servicio cerrado'}
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Ventas del día</h3>
-          <p className="text-3xl font-bold text-gray-900">${metrics.dailySales.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Órdenes completadas</h3>
-          <p className="text-3xl font-bold text-gray-900">{metrics.ordersAttended}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Ticket promedio</h3>
-          <p className="text-3xl font-bold text-gray-900">${metrics.averageTicket.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Mesas ocupadas</h3>
-          <p className="text-3xl font-bold text-gray-900">{metrics.occupiedTables} / {metrics.totalTables}</p>
-        </div>
+        <Card className="text-center">
+          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Ventas del día</h3>
+          <p className="text-3xl font-display font-bold text-chile-guajillo mt-2">${metrics.dailySales.toFixed(2)}</p>
+        </Card>
+        <Card className="text-center">
+          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Órdenes completadas</h3>
+          <p className="text-3xl font-display font-bold text-chocolate-oscuro mt-2">{metrics.ordersAttended}</p>
+        </Card>
+        <Card className="text-center">
+          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Ticket promedio</h3>
+          <p className="text-3xl font-display font-bold text-chocolate-oscuro mt-2">${metrics.averageTicket.toFixed(2)}</p>
+        </Card>
+        <Card className="text-center">
+          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Mesas ocupadas</h3>
+          <p className="text-3xl font-display font-bold text-chocolate-oscuro mt-2">{metrics.occupiedTables} / {metrics.totalTables}</p>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <Card>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">5 productos más vendidos (hoy)</h3>
+            <h3 className="text-lg font-display font-bold text-chocolate-oscuro">5 productos más vendidos (hoy)</h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Ordenar por:</span>
+              <span className="text-sm text-tierra-clara">Ordenar por:</span>
               <select
                 value={productSortBy}
                 onChange={(e) => setProductSortBy(e.target.value)}
-                className="p-1 border rounded text-sm"
+                className="p-1 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none"
               >
-                <option value="quantity">Cantidad vendida</option>
-                <option value="total">Monto total</option>
+                <option value="quantity">Cantidad</option>
+                <option value="total">Monto</option>
               </select>
             </div>
           </div>
           {metrics.topProducts.length === 0 ? (
-            <p className="text-gray-500">No hay ventas registradas hoy.</p>
+            <p className="text-tierra-clara">No hay ventas registradas hoy.</p>
           ) : (
             <ul className="space-y-2">
               {metrics.topProducts.map((product, idx) => (
-                <li key={idx} className="flex justify-between items-center border-b pb-2">
+                <li key={idx} className="flex justify-between items-center border-b border-barro-claro/20 pb-2">
                   <div>
-                    <span className="font-medium">{product.name}</span>
-                    <span className="text-xs text-gray-500 ml-1">({product.category})</span>
+                    <span className="font-medium text-chocolate-oscuro">{product.name}</span>
+                    <span className="text-xs text-tierra-clara ml-1">({product.category})</span>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right text-sm">
                     <span className="font-medium">{product.quantity} uds</span>
-                    <span className="text-gray-500 ml-2">${product.total.toFixed(2)}</span>
+                    <span className="text-tierra-clara ml-2">${product.total.toFixed(2)}</span>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Card>
 
-        {/* Podrías agregar aquí otro bloque si quieres, por ejemplo tiempo promedio del día */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Resumen rápido</h3>
-          <p className="text-gray-600">Las métricas detalladas se encuentran en la pestaña <strong>Reportes</strong>.</p>
-          <p className="text-gray-600 mt-2">El análisis completo de productos (incluyendo no vendidos) está disponible en la exportación a PDF de reportes.</p>
-        </div>
+        <Card>
+          <h3 className="text-lg font-display font-bold text-chocolate-oscuro mb-4">Resumen rápido</h3>
+          <p className="text-tierra-clara">Las métricas detalladas se encuentran en la pestaña <strong className="text-chocolate-oscuro">Reportes</strong>.</p>
+          <p className="text-tierra-clara mt-2">El análisis completo de productos está disponible en la exportación a PDF.</p>
+        </Card>
       </div>
     </div>
   );
