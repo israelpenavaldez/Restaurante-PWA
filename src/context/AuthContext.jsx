@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef  } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -20,10 +20,9 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pendingGoogleUser, setPendingGoogleUser] = useState(null);
-  const [unsubscribeUser, setUnsubscribeUser] = useState(() => () => {});
   const [isServiceOpen, setIsServiceOpen] = useState(true);
-  const [unsubscribeService, setUnsubscribeService] = useState(() => () => {});
-
+  const unsubscribeUserRef = useRef(null);
+  const unsubscribeServiceRef = useRef(null);
 
   // Registro con email y password
   const register = async (email, password, displayName) => {
@@ -47,9 +46,9 @@ export const AuthProvider = ({ children }) => {
   // Cerrar sesión
   const logout = async () => {
     // Limpiar suscripción antes de cerrar sesión
-    if (unsubscribeUser) {
-      unsubscribeUser();
-      setUnsubscribeUser(() => () => {});
+    if (unsubscribeUserRef.current) {
+      unsubscribeUserRef.current();
+      unsubscribeUserRef.current = null;
     }
     await signOut(auth);
   };
@@ -89,9 +88,9 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       
       // Limpiar la suscripción anterior si existe
-      if (unsubscribeUser) {
-        unsubscribeUser();
-        setUnsubscribeUser(() => () => {});
+      if (unsubscribeUserRef.current) {
+        unsubscribeUserRef.current();
+        unsubscribeUserRef.current = null;
       }
 
       if (currentUser) {
@@ -104,7 +103,7 @@ export const AuthProvider = ({ children }) => {
             setUserData(null);
           }
         });
-        setUnsubscribeUser(() => unsubscribeSnapshot);
+        unsubscribeUserRef.current = unsubscribeSnapshot;
       } else {
         setUserData(null);
       }
@@ -113,21 +112,21 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeUser) unsubscribeUser();
+      if (unsubscribeUserRef.current) unsubscribeUserRef.current();
     };
   }, []);
 
-  // Suscripción al estado del servicio (config/settings)
+  // Suscripción al estado del servicio
   useEffect(() => {
     const configRef = doc(db, 'config', 'settings');
     const unsubscribe = onSnapshot(configRef, (docSnap) => {
       if (docSnap.exists()) {
         setIsServiceOpen(docSnap.data().isServiceOpen ?? true);
       } else {
-        setIsServiceOpen(true); // valor por defecto
+        setIsServiceOpen(true);
       }
     });
-    setUnsubscribeService(() => unsubscribe);
+    unsubscribeServiceRef.current = unsubscribe;
     return () => unsubscribe();
   }, []);
 

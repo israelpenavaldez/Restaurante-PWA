@@ -213,10 +213,6 @@ const ViewTable = () => {
     }
   };
 
-  const hasPendingItems = (order) => {
-    return order.batches.some(batch => batch.items.some(item => item.status === 'pending'));
-  };
-
   const allItemsFinalized = (order) => {
     return order.batches.every(batch =>
       batch.items.every(item => item.status === 'delivered' || item.status === 'cancelled')

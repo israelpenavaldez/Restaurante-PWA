@@ -4,6 +4,7 @@ import { db } from '../../firebase/config';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getRealTotal, isOrderCompletelyCancelled } from '../../utils/helpers';
 
 const AdminReports = () => {
   const [filter, setFilter] = useState('day');
@@ -52,26 +53,6 @@ const AdminReports = () => {
   const [bottomProducts, setBottomProducts] = useState([]);
   const [productSortBy, setProductSortBy] = useState('quantity'); // 'quantity' or 'total'
   const [showOrdersTable, setShowOrdersTable] = useState(false);
-
-  const getRealTotal = (order) => {
-    if (!order.batches) return 0;
-    let total = 0;
-    order.batches.forEach(batch => {
-      batch.items.forEach(item => {
-        if (item.status !== 'cancelled') {
-          total += item.price * item.quantity;
-        }
-      });
-    });
-    return total;
-  };
-
-  const isOrderCompletelyCancelled = (order) => {
-    if (!order.batches || order.batches.length === 0) return false;
-    return order.batches.every(batch =>
-      batch.items.every(item => item.status === 'cancelled')
-    );
-  };
 
   const getPaymentDate = (order) => {
     if (order.completedAt) return order.completedAt.toDate();

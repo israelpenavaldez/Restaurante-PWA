@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatElapsedTime } from '../../utils/helpers';
 
 const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMarkItemReady, onUnmarkItemReady, isLocked }) => {
   const [readyQuantities, setReadyQuantities] = useState({});
@@ -13,13 +14,6 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
     });
     setReadyQuantities(initial);
   }, [batch]);
-
-  const formatElapsedTime = (timestamp) => {
-    if (!timestamp) return '';
-    const diff = Math.floor((Date.now() - timestamp.toDate()) / 1000);
-    const minutes = Math.floor(diff / 60);
-    return `${minutes} min`;
-  };
 
   const handleQuantityChange = (itemId, value) => {
     const qty = parseInt(value) || 1;

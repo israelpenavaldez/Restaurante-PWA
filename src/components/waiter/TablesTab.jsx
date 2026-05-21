@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { subscribeToTables, subscribeToTableOrders } from '../../services/firestoreService';
+import { formatElapsedTime } from '../../utils/helpers';
 
 const TablesTab = ({ onOccupy, onView }) => {
   const [tables, setTables] = useState([]);
@@ -50,14 +51,6 @@ const TablesTab = ({ onOccupy, onView }) => {
     });
     return () => unsubscribes.forEach(unsub => unsub());
   }, [tables]);
-
-  const formatElapsedTime = (since) => {
-    if (!since) return '';
-    const diff = Math.floor((Date.now() - since.toDate()) / 1000);
-    const hours = Math.floor(diff / 3600);
-    const minutes = Math.floor((diff % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  };
 
   if (loading) return <div className="text-center text-gray-500">Cargando mesas...</div>;
 

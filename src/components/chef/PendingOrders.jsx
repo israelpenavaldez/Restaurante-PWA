@@ -1,15 +1,7 @@
 import React from 'react';
+import { formatElapsedTime } from '../../utils/helpers';
 
 const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
-  const formatElapsedTime = (timestamp) => {
-    if (!timestamp) return '';
-    const diff = Math.floor((Date.now() - timestamp.toDate()) / 1000);
-    const minutes = Math.floor(diff / 60);
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}min`;
-  };
 
   if (batches.length === 0) {
     return <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">No hay lotes pendientes</div>;

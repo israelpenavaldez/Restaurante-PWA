@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { getRealTotal, isOrderCompletelyCancelled,  } from '../../utils/helpers';
 
 const AdminHome = () => {
   const [metrics, setMetrics] = useState({
@@ -15,28 +16,6 @@ const AdminHome = () => {
   const [loading, setLoading] = useState(true);
   const [updatingService, setUpdatingService] = useState(false);
   const [productSortBy, setProductSortBy] = useState('quantity'); // 'quantity' or 'total'
-
-  // Función para obtener el total real de una orden (excluyendo cancelados)
-  const getRealTotal = (order) => {
-    if (!order.batches) return 0;
-    let total = 0;
-    order.batches.forEach(batch => {
-      batch.items.forEach(item => {
-        if (item.status !== 'cancelled') {
-          total += item.price * item.quantity;
-        }
-      });
-    });
-    return total;
-  };
-
-  // Determinar si una orden está completamente cancelada (todos los items cancelados)
-  const isOrderCompletelyCancelled = (order) => {
-    if (!order.batches || order.batches.length === 0) return false;
-    return order.batches.every(batch =>
-      batch.items.every(item => item.status === 'cancelled')
-    );
-  };
 
   // Obtener métricas del día actual (desde 00:00 hasta ahora)
   const fetchDailyMetrics = async () => {

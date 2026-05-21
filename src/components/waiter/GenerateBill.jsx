@@ -5,20 +5,23 @@ import { db } from '../../firebase/config';
 import { getMenuCategories } from '../../services/firestoreService';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
-
-const getProductCategory = (productName, categories) => {
-  for (const cat of categories) {
-    if (cat.items.some(item => item.name === productName)) return cat.name;
-  }
-  return 'Otros';
-};
+import { getProductCategory } from '../../utils/helpers';
 
 const GenerateBill = () => {
   const { tableId, orderId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const billType = queryParams.get('type'); // 'prepay' o 'final'
+  const billType = queryParams.get('type');
+  const validTypes = ['prepay', 'final'];
+  if (!validTypes.includes(billType)) {
+    // Redirigir o mostrar error
+    useEffect(() => {
+      alert('Tipo de factura no válido');
+      navigate(`/view/${tableId}`, { replace: true });
+    }, []);
+    return null; // O un mensaje de carga/error
+  }
 
   const [order, setOrder] = useState(null);
   const [categories, setCategories] = useState([]);
