@@ -53,15 +53,16 @@ const AddProductToOrder = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       const cats = await getMenuCategories();
-      cats.sort((a, b) => a.name.localeCompare(b.name));
-      setCategories(cats);
-      if (cats.length > 0) setSelectedCategory(cats[0].id);
+      const activeCats = cats.filter(cat => cat.active !== false);
+      activeCats.sort((a, b) => a.name.localeCompare(b.name));
+      setCategories(activeCats);
+      if (activeCats.length > 0) setSelectedCategory(activeCats[0].id);
     };
     fetchMenu();
   }, []);
 
   const currentCategory = categories.find(c => c.id === selectedCategory);
-  const products = currentCategory?.items || [];
+  const products = (currentCategory?.items || []).filter(item => item.active !== false);
   const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
 
   const addToTemp = (product) => {

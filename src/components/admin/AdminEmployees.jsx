@@ -4,17 +4,16 @@ import { useNotification } from '../../context/NotificationContext';
 import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Card from '../ui/Card';
-import Button from '../ui/Button';
 
 const AdminEmployees = () => {
-  const { user } = useAuth();
+  const { user, isServiceOpen } = useAuth();
+  const { notify, confirm } = useNotification();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingRole, setEditingRole] = useState(null);
-  const { notify, confirm } = useNotification();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchEmployees = async () => {
       const snap = await getDocs(collection(db, 'users'));
       const list = [];
       snap.forEach(doc => {
@@ -24,7 +23,7 @@ const AdminEmployees = () => {
       setEmployees(list);
       setLoading(false);
     };
-    fetch();
+    fetchEmployees();
   }, [user.email]);
 
   const updateRole = async (id, role) => {
@@ -68,6 +67,13 @@ const AdminEmployees = () => {
   return (
     <div>
       <h2 className="text-2xl font-display font-bold text-chocolate-oscuro mb-6">Gestión de empleados</h2>
+
+      {isServiceOpen && (
+        <div className="mb-4 text-center text-chile-guajillo bg-chile-guajillo/10 px-4 py-2 rounded-full text-sm">
+          Cierre el servicio para gestionar empleados
+        </div>
+      )}
+
       <Card className="overflow-hidden !p-0">
         <table className="min-w-full divide-y divide-barro-claro/30">
           <thead className="bg-barro-claro/20">
@@ -89,7 +95,8 @@ const AdminEmployees = () => {
                     <select
                       value={emp.role}
                       onChange={e => updateRole(emp.id, e.target.value)}
-                      className="p-1 border-b-2 border-barro-claro bg-transparent rounded-t-md text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition"
+                      disabled={isServiceOpen}
+                      className="p-1 border-b-2 border-barro-claro bg-transparent rounded-t-md text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition disabled:opacity-50"
                     >
                       <option value="waiter">Mesero</option>
                       <option value="chef">Cocinero</option>
@@ -109,12 +116,28 @@ const AdminEmployees = () => {
                   {editingRole === emp.id ? (
                     <button onClick={() => setEditingRole(null)} className="text-tierra-clara hover:text-chocolate-oscuro text-sm">Cancelar</button>
                   ) : (
-                    <button onClick={() => setEditingRole(emp.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">Editar rol</button>
+                    <button
+                      onClick={() => setEditingRole(emp.id)}
+                      disabled={isServiceOpen}
+                      className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Editar rol
+                    </button>
                   )}
-                  <button onClick={() => toggleStatus(emp.id, emp.enabled)} className={`text-sm font-medium ${emp.enabled ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'}`}>
+                  <button
+                    onClick={() => toggleStatus(emp.id, emp.enabled)}
+                    disabled={isServiceOpen}
+                    className={`text-sm font-medium ${emp.enabled ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
                     {emp.enabled ? 'Deshabilitar' : 'Habilitar'}
                   </button>
-                  <button onClick={() => deleteEmp(emp.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">Eliminar</button>
+                  <button
+                    onClick={() => deleteEmp(emp.id)}
+                    disabled={isServiceOpen}
+                    className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Eliminar
+                  </button>
                 </td>
               </tr>
             ))}

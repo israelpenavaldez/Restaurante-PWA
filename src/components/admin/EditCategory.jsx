@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useNotification } from '../../context/NotificationContext';
 import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -25,20 +26,22 @@ const EditCategory = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingVariant, setUploadingVariant] = useState(false);
+
+  const { isServiceOpen } = useAuth();
   const { notify, confirm } = useNotification();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchCategory = async () => {
       if (categoryId === 'new') { setLoading(false); return; }
-      const ref = doc(db, 'menuCategories', categoryId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const d = snap.data();
-        setName(d.name || '');
-        setDescription(d.description || '');
-        setImageUrl(d.imageUrl || '');
-        setIsActive(d.active !== false);
-        let vars = d.items || [];
+      const docRef = doc(db, 'menuCategories', categoryId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setName(data.name || '');
+        setDescription(data.description || '');
+        setImageUrl(data.imageUrl || '');
+        setIsActive(data.active !== false);
+        let vars = data.items || [];
         vars.sort((a, b) => a.name.localeCompare(b.name));
         setVariants(vars);
       } else {
@@ -47,8 +50,8 @@ const EditCategory = () => {
       }
       setLoading(false);
     };
-    fetch();
-  }, [categoryId, navigate]);
+    fetchCategory();
+  }, [categoryId, navigate, notify]);
 
   useEffect(() => {
     if (variantId && variants.length) {
@@ -83,27 +86,43 @@ const EditCategory = () => {
       const url = await uploadToImgBB(file);
       setActiveVariant(prev => ({ ...prev, imageUrl: url }));
     } catch (err) {
-      console.error(err);
-      notify('No se pudo subir la imagen de la variante', 'error');
+      notify('No se pudo subir la imagen', 'error');
     } finally {
       setUploadingVariant(false);
     }
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return notify('Nombre obligatorio', 'warning');
+    if (!name.trim()) {
+      notify('El nombre de la categoría es obligatorio', 'warning');
+      return;
+    }
     setSaving(true);
-    const data = { name: name.trim(), description: description.trim(), imageUrl: imageUrl.trim(), active: isActive, items: variants };
+    const data = {
+      name: name.trim(),
+      description: description.trim(),
+      imageUrl: imageUrl.trim(),
+      active: isActive,
+      items: variants,
+    };
     try {
       if (categoryId === 'new') await setDoc(doc(collection(db, 'menuCategories')), data);
       else await updateDoc(doc(db, 'menuCategories', categoryId), data);
       notify('Categoría guardada correctamente', 'success');
       navigate('/dashboard', { state: { activeTab: 'menu' } });
-    } catch (err) { console.error(err); notify('Error al guardar', 'error'); }
-    finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      notify('Error al guardar', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addVariant = () => {
+    if (isServiceOpen) {
+      notify('No puede agregar variantes con el servicio abierto', 'warning');
+      return;
+    }
     const v = { id: Date.now(), name: 'Nueva variante', price: 0, description: '', active: true, imageUrl: '' };
     setVariants([...variants, v]);
     setActiveVariant(v);
@@ -115,18 +134,58 @@ const EditCategory = () => {
   };
 
   const deleteVariant = async (id) => {
+    if (isServiceOpen) {
+      notify('No puede eliminar variantes con el servicio abierto', 'warning');
+      return;
+    }
     const respuesta = await confirm('¿Eliminar esta variante?');
     if (!respuesta) return;
     setVariants(variants.filter(v => v.id !== id));
-    notify('Variante eliminada', 'success');
     if (activeVariant?.id === id) setActiveVariant(null);
+    // Guardar automáticamente al eliminar
+    try {
+      const updatedVariants = variants.filter(v => v.id !== id);
+      await updateDoc(doc(db, 'menuCategories', categoryId), { items: updatedVariants });
+      notify('Variante eliminada', 'success');
+    } catch (error) {
+      notify('Error al eliminar', 'error');
+    }
   };
 
-  const toggleVariantActive = (id) => {
-    setVariants(variants.map(v => v.id === id ? { ...v, active: !v.active } : v));
+  const toggleVariantActive = async (id) => {
+    const updatedVariants = variants.map(v =>
+      v.id === id ? { ...v, active: !v.active } : v
+    );
+    setVariants(updatedVariants);
+    if (activeVariant?.id === id) {
+      setActiveVariant(prev => ({ ...prev, active: !prev.active }));
+    }
+    try {
+      await updateDoc(doc(db, 'menuCategories', categoryId), { items: updatedVariants });
+      notify('Estado de variante actualizado', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('Error al actualizar', 'error');
+    }
+  };
+
+  // Guardar el toggle de categoría activa inmediatamente
+  const toggleCategoryActive = async () => {
+    setIsActive(!isActive);
+    try {
+      await updateDoc(doc(db, 'menuCategories', categoryId), { active: !isActive });
+      notify(!isActive ? 'Categoría activada' : 'Categoría desactivada', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('Error al cambiar estado', 'error');
+      setIsActive(!isActive); // revertir
+    }
   };
 
   if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando...</div>;
+
+  // Bloquear edición completa si el servicio está abierto y no es nueva
+  const isEditingBlocked = isServiceOpen && categoryId !== 'new';
 
   return (
     <div className="max-w-4xl mx-auto p-4 bg-crema min-h-screen">
@@ -139,88 +198,140 @@ const EditCategory = () => {
           {categoryId === 'new' ? 'Nueva categoría' : `Editar ${name}`}
         </h2>
 
+        {isEditingBlocked && (
+          <div className="bg-chile-guajillo/10 text-chile-guajillo rounded-xl p-4 mb-6">
+            <p className="font-medium">Servicio abierto</p>
+            <p className="text-sm">Solo puede activar/desactivar categorías y variantes. Las ediciones completas requieren cerrar el servicio.</p>
+          </div>
+        )}
+
         {/* Imagen categoría */}
         <div className="mb-4 flex items-start space-x-4">
           <div className="w-32 h-32 bg-barro-claro/30 rounded-xl overflow-hidden flex-shrink-0">
             <img src={imageUrl || 'https://via.placeholder.com/128?text=Sin+imagen'} alt={name || 'Categoría'} className="w-full h-full object-cover" />
           </div>
           <div className="space-y-2">
-            <label className="bg-chile-guajillo text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer inline-block hover:bg-red-700 transition">
-              {uploading ? 'Subiendo...' : 'Subir imagen'}
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
-            </label>
-            {imageUrl && (
-              <button onClick={() => setImageUrl('')} className="bg-tierra-clara text-white px-3 py-1 rounded-xl text-sm font-medium hover:bg-brown-700 transition block">
-                Eliminar imagen
-              </button>
+            {!isEditingBlocked && (
+              <>
+                <label className="bg-chile-guajillo text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer inline-block hover:bg-red-700 transition">
+                  {uploading ? 'Subiendo...' : 'Subir imagen'}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                </label>
+                {imageUrl && (
+                  <button onClick={() => setImageUrl('')} className="bg-tierra-clara text-white px-3 py-1 rounded-xl text-sm font-medium hover:bg-brown-700 transition block">
+                    Eliminar imagen
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {/* Campos */}
+        {/* Campos generales */}
         <div className="space-y-4 mb-6">
           <div>
             <label className="block font-medium text-chocolate-oscuro mb-1">Nombre de categoría *</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)}
-              className="w-full p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition" />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isEditingBlocked}
+              className="w-full p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+            />
           </div>
           <div>
             <label className="block font-medium text-chocolate-oscuro mb-1">Descripción</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows="3"
-              className="w-full p-2 border border-barro-claro rounded-lg bg-white/80 text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition resize-none" />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows="3"
+              disabled={isEditingBlocked}
+              className="w-full p-2 border border-barro-claro rounded-lg bg-white/80 text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+            />
           </div>
           <div className="flex items-center gap-2">
-            <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="rounded border-barro-claro text-chile-guajillo focus:ring-chile-guajillo" />
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={categoryId !== 'new' ? toggleCategoryActive : (e) => setIsActive(e.target.checked)}
+              className="rounded border-barro-claro text-chile-guajillo focus:ring-chile-guajillo"
+            />
             <label className="text-chocolate-oscuro">Categoría activa</label>
           </div>
         </div>
 
-        {/* Variantes */}
+        {/* Gestión de variantes */}
         <div className="border-t border-barro-claro/30 pt-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-display font-bold text-chocolate-oscuro">Variantes</h3>
-            <Button variant="success" onClick={addVariant} className="text-sm py-1 px-3">+ Agregar variante</Button>
+            <Button variant="success" onClick={addVariant} disabled={isServiceOpen} className="text-sm py-1 px-3">
+              + Agregar variante
+            </Button>
           </div>
 
+          {/* Formulario de variante activa */}
           {activeVariant && (
             <Card className="mb-4 bg-barro-claro/10">
-              <h4 className="font-display font-bold text-chocolate-oscuro mb-3">Editando variante</h4>
-              <div className="mb-3 flex items-start space-x-4">
-                <div className="w-20 h-20 bg-barro-claro/30 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src={activeVariant.imageUrl || 'https://via.placeholder.com/80?text=Sin+img'} alt={activeVariant.name} className="w-full h-full object-cover" />
+              <h4 className="font-display font-bold text-chocolate-oscuro mb-3">
+                {isServiceOpen ? 'Vista rápida (servicio abierto)' : 'Editando variante'}
+              </h4>
+
+              {isServiceOpen ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-chocolate-oscuro">{activeVariant.name}</p>
+                    <p className="text-sm text-tierra-clara">${activeVariant.price}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleVariantActive(activeVariant.id)}
+                    className={`px-3 py-1 rounded-xl text-sm font-medium transition ${
+                      activeVariant.active ? 'bg-maiz-dorado text-chocolate-oscuro hover:bg-yellow-600' : 'bg-verde-nopal text-white hover:bg-green-700'
+                    }`}
+                  >
+                    {activeVariant.active ? 'Desactivar' : 'Activar'}
+                  </button>
                 </div>
-                <div className="space-y-1">
-                  <label className="bg-chile-guajillo text-white px-3 py-1 rounded-lg text-xs font-medium cursor-pointer inline-block hover:bg-red-700 transition">
-                    {uploadingVariant ? 'Subiendo...' : 'Subir imagen'}
-                    <input type="file" accept="image/*" onChange={handleVariantImageUpload} className="hidden" disabled={uploadingVariant} />
-                  </label>
-                  {activeVariant.imageUrl && (
-                    <button onClick={() => setActiveVariant({ ...activeVariant, imageUrl: '' })} className="bg-tierra-clara text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-brown-700 transition block">
-                      Quitar imagen
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <input type="text" value={activeVariant.name} onChange={e => setActiveVariant({ ...activeVariant, name: e.target.value })}
-                  placeholder="Nombre de la variante" className="w-full p-2 border-b-2 border-barro-claro bg-white rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />
-                <input type="number" value={activeVariant.price} onChange={e => setActiveVariant({ ...activeVariant, price: parseFloat(e.target.value) })}
-                  placeholder="Precio" className="w-full p-2 border-b-2 border-barro-claro bg-white rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />
-                <textarea value={activeVariant.description || ''} onChange={e => setActiveVariant({ ...activeVariant, description: e.target.value })}
-                  placeholder="Descripción individual (opcional)" rows="2" className="w-full p-2 border border-barro-claro rounded-lg bg-white text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition resize-none" />
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={activeVariant.active !== false} onChange={e => setActiveVariant({ ...activeVariant, active: e.target.checked })}
-                    className="rounded border-barro-claro text-chile-guajillo focus:ring-chile-guajillo" />
-                  <label className="text-chocolate-oscuro text-sm">Activo</label>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="primary" onClick={() => updateVariant(activeVariant)} className="text-sm py-1">Guardar variante</Button>
-                  <Button variant="secondary" onClick={() => setActiveVariant(null)} className="text-sm py-1">Cancelar</Button>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="mb-3 flex items-start space-x-4">
+                    <div className="w-20 h-20 bg-barro-claro/30 rounded-xl overflow-hidden flex-shrink-0">
+                      <img src={activeVariant.imageUrl || 'https://via.placeholder.com/80?text=Sin+img'} alt={activeVariant.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="bg-chile-guajillo text-white px-3 py-1 rounded-lg text-xs font-medium cursor-pointer inline-block hover:bg-red-700 transition">
+                        {uploadingVariant ? 'Subiendo...' : 'Subir imagen'}
+                        <input type="file" accept="image/*" onChange={handleVariantImageUpload} className="hidden" disabled={uploadingVariant} />
+                      </label>
+                      {activeVariant.imageUrl && (
+                        <button onClick={() => setActiveVariant({ ...activeVariant, imageUrl: '' })} className="bg-tierra-clara text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-brown-700 transition block">
+                          Quitar imagen
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <input type="text" value={activeVariant.name} onChange={e => setActiveVariant({ ...activeVariant, name: e.target.value })}
+                      placeholder="Nombre de la variante" className="w-full p-2 border-b-2 border-barro-claro bg-white rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />
+                    <input type="number" value={activeVariant.price} onChange={e => setActiveVariant({ ...activeVariant, price: parseFloat(e.target.value) })}
+                      placeholder="Precio" className="w-full p-2 border-b-2 border-barro-claro bg-white rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />
+                    <textarea value={activeVariant.description || ''} onChange={e => setActiveVariant({ ...activeVariant, description: e.target.value })}
+                      placeholder="Descripción individual (opcional)" rows="2" className="w-full p-2 border border-barro-claro rounded-lg bg-white text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition resize-none" />
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" checked={activeVariant.active !== false} onChange={e => setActiveVariant({ ...activeVariant, active: e.target.checked })}
+                        className="rounded border-barro-claro text-chile-guajillo focus:ring-chile-guajillo" />
+                      <label className="text-chocolate-oscuro text-sm">Activo</label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="primary" onClick={() => updateVariant(activeVariant)} className="text-sm py-1">Guardar variante</Button>
+                      <Button variant="secondary" onClick={() => setActiveVariant(null)} className="text-sm py-1">Cancelar</Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
+          {/* Lista de variantes */}
           <ul className="space-y-2">
             {variants.map(v => (
               <li key={v.id} className="flex justify-between items-center border-b border-barro-claro/20 pb-3">
@@ -237,11 +348,18 @@ const EditCategory = () => {
                   </div>
                 </div>
                 <div className="flex gap-2 text-sm">
-                  <button onClick={() => setActiveVariant(v)} className="text-chile-guajillo hover:text-red-800 font-medium">Editar</button>
-                  <button onClick={() => toggleVariantActive(v.id)} className={`font-medium ${v.active ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'}`}>
+                  {!isServiceOpen && (
+                    <button onClick={() => setActiveVariant(v)} className="text-chile-guajillo hover:text-red-800 font-medium">Editar</button>
+                  )}
+                  <button
+                    onClick={() => toggleVariantActive(v.id)}
+                    className={`font-medium ${v.active ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'}`}
+                  >
                     {v.active ? 'Desactivar' : 'Activar'}
                   </button>
-                  <button onClick={() => deleteVariant(v.id)} className="text-chile-guajillo hover:text-red-800 font-medium">Eliminar</button>
+                  {!isServiceOpen && (
+                    <button onClick={() => deleteVariant(v.id)} className="text-chile-guajillo hover:text-red-800 font-medium">Eliminar</button>
+                  )}
                 </div>
               </li>
             ))}
@@ -252,9 +370,11 @@ const EditCategory = () => {
         {/* Botones finales */}
         <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-barro-claro/30">
           <Button variant="secondary" onClick={() => navigate('/dashboard', { state: { activeTab: 'menu' } })}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </Button>
+          {!isServiceOpen && (
+            <Button variant="primary" onClick={handleSave} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          )}
         </div>
       </Card>
     </div>

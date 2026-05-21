@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -10,6 +12,9 @@ const AdminMenu = () => {
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const { isServiceOpen } = useAuth();
+  const { notify } = useNotification();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -29,15 +34,37 @@ const AdminMenu = () => {
   const handleEdit = (id) => navigate(`/admin/edit-category/${id}`);
   const handleNew = () => navigate('/admin/edit-category/new');
 
+  const toggleCategoryActive = async (categoryId, currentActive) => {
+    try {
+      await updateDoc(doc(db, 'menuCategories', categoryId), { active: !currentActive });
+      setCategories(prev =>
+        prev.map(cat =>
+          cat.id === categoryId ? { ...cat, active: !currentActive } : cat
+        )
+      );
+      notify(!currentActive ? 'Categoría activada' : 'Categoría desactivada', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('No se pudo cambiar el estado', 'error');
+    }
+  };
+
   if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando menú...</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-display font-bold text-chocolate-oscuro">Categorías del menú</h2>
-        <Button variant="success" onClick={handleNew}>
-          + Nueva categoría
-        </Button>
+        <div className="flex items-center gap-3">
+          {isServiceOpen && (
+            <span className="text-sm text-chile-guajillo bg-chile-guajillo/10 px-3 py-1 rounded-full">
+              Servicio abierto: solo puede activar/desactivar
+            </span>
+          )}
+          <Button variant="success" onClick={handleNew} disabled={isServiceOpen}>
+            + Nueva categoría
+          </Button>
+        </div>
       </div>
 
       <input
@@ -64,12 +91,22 @@ const AdminMenu = () => {
                 {category.description && (
                   <p className="text-tierra-clara text-sm mb-3">{category.description}</p>
                 )}
-                <button
-                  onClick={() => handleEdit(category.id)}
-                  className="text-chile-guajillo hover:text-red-800 font-medium text-sm transition"
-                >
-                  Editar categoría
-                </button>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => handleEdit(category.id)}
+                    className="text-chile-guajillo hover:text-red-800 font-medium text-sm transition"
+                  >
+                    {isServiceOpen ? 'Ver / Toggle' : 'Editar'}
+                  </button>
+                  <button
+                    onClick={() => toggleCategoryActive(category.id, category.active)}
+                    className={`text-sm font-medium transition ${
+                      category.active ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'
+                    }`}
+                  >
+                    {category.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                </div>
               </div>
             </div>
             {category.items?.length > 0 && (

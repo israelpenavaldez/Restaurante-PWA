@@ -43,9 +43,10 @@ const OccupyTable = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       const cats = await getMenuCategories();
-      cats.sort((a, b) => a.name.localeCompare(b.name));
-      setCategories(cats);
-      if (cats.length > 0) setSelectedCategory(cats[0].id);
+      const activeCats = cats.filter(cat => cat.active !== false);
+      activeCats.sort((a, b) => a.name.localeCompare(b.name));
+      setCategories(activeCats);
+      if (activeCats.length > 0) setSelectedCategory(activeCats[0].id);
       setLoadingMenu(false);
     };
     fetchMenu();
@@ -162,7 +163,7 @@ const OccupyTable = () => {
 
   const activeClient = clients.find(c => c.id === activeClientId);
   const currentCategory = categories.find(cat => cat.id === selectedCategory);
-  const products = currentCategory?.items || [];
+  const products = (currentCategory?.items || []).filter(item => item.active !== false);
   const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
 
   if (loadingMenu || clients.length === 0 || realTableNumber === null) {
