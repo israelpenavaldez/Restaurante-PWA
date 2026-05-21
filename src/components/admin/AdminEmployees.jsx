@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Card from '../ui/Card';
@@ -10,6 +11,7 @@ const AdminEmployees = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingRole, setEditingRole] = useState(null);
+  const { notify, confirm } = useNotification();
 
   useEffect(() => {
     const fetch = async () => {
@@ -26,20 +28,38 @@ const AdminEmployees = () => {
   }, [user.email]);
 
   const updateRole = async (id, role) => {
-    await updateDoc(doc(db, 'users', id), { role });
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, role } : e));
-    setEditingRole(null);
+    try {
+      await updateDoc(doc(db, 'users', id), { role });
+      setEmployees(prev => prev.map(e => e.id === id ? { ...e, role } : e));
+      setEditingRole(null);
+      notify('Rol actualizado correctamente', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('No se pudo actualizar el rol', 'error');
+    }
   };
 
   const toggleStatus = async (id, current) => {
-    await updateDoc(doc(db, 'users', id), { enabled: !current });
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, enabled: !current } : e));
+    try {
+      await updateDoc(doc(db, 'users', id), { enabled: !current });
+      setEmployees(prev => prev.map(e => e.id === id ? { ...e, enabled: !current } : e));
+      notify(current ? 'Empleado deshabilitado' : 'Empleado habilitado', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('No se pudo cambiar el estado', 'error');
+    }
   };
 
   const deleteEmp = async (id) => {
-    if (window.confirm('¿Eliminar este empleado?')) {
+    const respuesta = await confirm('¿Eliminar este empleado? Se perderán sus datos.');
+    if (!respuesta) return;
+    try {
       await deleteDoc(doc(db, 'users', id));
       setEmployees(prev => prev.filter(e => e.id !== id));
+      notify('Empleado eliminado', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('No se pudo eliminar el empleado', 'error');
     }
   };
 

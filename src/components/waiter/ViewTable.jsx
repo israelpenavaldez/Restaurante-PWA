@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { subscribeToTableOrders, updateOrder } from '../../services/firestoreService';
+import { useNotification } from '../../context/NotificationContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import Card from '../ui/Card';
@@ -19,6 +20,7 @@ const ViewTable = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+  const { notify, confirm, prompt } = useNotification();
 
   useEffect(() => {
     const fetchTableNumber = async () => {
@@ -72,7 +74,7 @@ const ViewTable = () => {
         }
         await updateOrder(orderId, { batches: updatedBatches, status: updatedOrderStatus, deliveredAt });
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });
@@ -84,7 +86,7 @@ const ViewTable = () => {
         checkWaiter();
         const order = orders.find(o => o.id === orderId);
         if (!order || order.prepaid) {
-          alert('No se pueden cancelar productos en una orden prepagada');
+          notify('No se pueden cancelar productos en una orden prepagada', 'warning');
           return;
         }
         const batch = order.batches.find(b => b.batchId === batchId);
@@ -93,10 +95,13 @@ const ViewTable = () => {
 
         let quantityToCancel = item.quantity;
         if (item.quantity > 1) {
-          const input = prompt(`¿Cuántas unidades de "${item.name}" cancelar? (1-${item.quantity})`);
+          const input = await prompt(`¿Cuántas unidades de "${item.name}" cancelar? (1-${item.quantity})`, '1');
           if (!input) return;
           const qty = parseInt(input);
-          if (isNaN(qty) || qty < 1 || qty > item.quantity) return;
+          if (isNaN(qty) || qty < 1 || qty > item.quantity) {
+            notify('Cantidad no válida', 'warning');
+            return;
+          }
           quantityToCancel = qty;
         }
 
@@ -129,7 +134,7 @@ const ViewTable = () => {
         }
         await updateOrder(orderId, { batches: updatedBatches, status: updatedOrderStatus, deliveredAt });
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });
@@ -140,7 +145,7 @@ const ViewTable = () => {
       checkWaiter();
       navigate(`/generate-bill/${tableId}/${orderId}?type=${type}`);
     } catch (err) {
-      alert(err.message);
+      notify(err.message, 'error');
       navigate('/dashboard');
     }
   };
@@ -151,7 +156,7 @@ const ViewTable = () => {
         checkWaiter();
         await updateOrder(orderId, { status: 'completed', completedAt: Timestamp.now() });
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });
@@ -161,15 +166,17 @@ const ViewTable = () => {
     withLock(async () => {
       try {
         checkWaiter();
+        const respuesta = await confirm('¿Estás seguro de liberar la mesa?');
+        if (!respuesta) return;      
         await updateDoc(doc(db, 'tables', tableId), {
           status: 'free',
           occupiedSince: null,
           currentOrderId: null
         });
+        notify('Mesa liberada', 'success');
         navigate('/dashboard');
       } catch (err) {
-        alert(err.message);
-        navigate('/dashboard');
+        notify(err.message, 'error');
       }
     });
   };
@@ -179,7 +186,7 @@ const ViewTable = () => {
       checkWaiter();
       navigate(`/add-product/${tableId}/${orderId}`);
     } catch (err) {
-      alert(err.message);
+      notify(err.message, 'error');
       navigate('/dashboard');
     }
   };
@@ -189,7 +196,7 @@ const ViewTable = () => {
       checkWaiter();
       navigate(`/add-client/${tableId}`);
     } catch (err) {
-      alert(err.message);
+      notify(err.message, 'error');
       navigate('/dashboard');
     }
   };

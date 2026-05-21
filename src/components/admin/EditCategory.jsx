@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Card from '../ui/Card';
@@ -24,6 +25,7 @@ const EditCategory = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingVariant, setUploadingVariant] = useState(false);
+  const { notify, confirm } = useNotification();
 
   useEffect(() => {
     const fetch = async () => {
@@ -40,7 +42,7 @@ const EditCategory = () => {
         vars.sort((a, b) => a.name.localeCompare(b.name));
         setVariants(vars);
       } else {
-        alert('Categoría no encontrada');
+        notify('Categoría no encontrada', 'error');
         navigate('/dashboard', { state: { activeTab: 'menu' } });
       }
       setLoading(false);
@@ -69,7 +71,7 @@ const EditCategory = () => {
     if (!file) return;
     setUploading(true);
     try { setImageUrl(await uploadToImgBB(file)); }
-    catch (err) { alert('No se pudo subir la imagen'); }
+    catch (err) { notify('No se pudo subir la imagen', 'error'); }
     finally { setUploading(false); }
   };
 
@@ -82,22 +84,22 @@ const EditCategory = () => {
       setActiveVariant(prev => ({ ...prev, imageUrl: url }));
     } catch (err) {
       console.error(err);
-      alert('No se pudo subir la imagen de la variante');
+      notify('No se pudo subir la imagen de la variante', 'error');
     } finally {
       setUploadingVariant(false);
     }
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return alert('Nombre obligatorio');
+    if (!name.trim()) return notify('Nombre obligatorio', 'warning');
     setSaving(true);
     const data = { name: name.trim(), description: description.trim(), imageUrl: imageUrl.trim(), active: isActive, items: variants };
     try {
       if (categoryId === 'new') await setDoc(doc(collection(db, 'menuCategories')), data);
       else await updateDoc(doc(db, 'menuCategories', categoryId), data);
-      alert('Categoría guardada');
+      notify('Categoría guardada correctamente', 'success');
       navigate('/dashboard', { state: { activeTab: 'menu' } });
-    } catch (err) { console.error(err); alert('Error al guardar'); }
+    } catch (err) { console.error(err); notify('Error al guardar', 'error'); }
     finally { setSaving(false); }
   };
 
@@ -112,11 +114,12 @@ const EditCategory = () => {
     setActiveVariant(null);
   };
 
-  const deleteVariant = (id) => {
-    if (window.confirm('¿Eliminar variante?')) {
-      setVariants(variants.filter(v => v.id !== id));
-      if (activeVariant?.id === id) setActiveVariant(null);
-    }
+  const deleteVariant = async (id) => {
+    const respuesta = await confirm('¿Eliminar esta variante?');
+    if (!respuesta) return;
+    setVariants(variants.filter(v => v.id !== id));
+    notify('Variante eliminada', 'success');
+    if (activeVariant?.id === id) setActiveVariant(null);
   };
 
   const toggleVariantActive = (id) => {

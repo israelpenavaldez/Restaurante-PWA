@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
@@ -13,7 +14,8 @@ const LoginView = () => {
   const [loading, setLoading] = useState(false);
   const [showPasswordSetup, setShowPasswordSetup] = useState(false);
   const [newPassword, setNewPassword] = useState('');
-
+  
+  const { notify } = useNotification();
   const { login, register, loginWithGoogle, setGoogleUserPassword } = useAuth();
   const navigate = useNavigate();
 
@@ -27,7 +29,7 @@ const LoginView = () => {
         navigate('/dashboard');
       } else {
         await register(email, password, displayName);
-        alert('Registro exitoso. Espera la aprobación del administrador.');
+        notify('Registro exitoso. Espera la aprobación del administrador.', 'success');
         setIsLogin(true);
         setEmail('');
         setPassword('');
@@ -63,7 +65,7 @@ const LoginView = () => {
     setLoading(true);
     try {
       await setGoogleUserPassword(newPassword);
-      alert('Contraseña establecida. Ya puedes iniciar sesión con email y contraseña.');
+      notify('Contraseña establecida. Ya puedes iniciar sesión con email y contraseña.', 'success');
       setShowPasswordSetup(false);
       setNewPassword('');
       navigate('/dashboard');

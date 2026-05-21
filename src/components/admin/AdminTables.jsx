@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useNotification } from '../../context/NotificationContext';
 import { db } from '../../firebase/config';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -12,6 +13,7 @@ const AdminTables = () => {
   const [editId, setEditId] = useState(null);
   const [editNumber, setEditNumber] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const { notify, confirm } = useNotification();
 
   const fetchTables = async () => {
     const snap = await getDocs(collection(db, 'tables'));
@@ -25,16 +27,16 @@ const AdminTables = () => {
 
   const addTable = async (e) => {
     e.preventDefault();
-    if (!newNumber.trim()) return alert('Identificador obligatorio');
-    if (tables.some(t => t.number.toString() === newNumber.trim())) return alert('Ya existe');
+    if (!newNumber.trim()) return notify('Identificador obligatorio', 'warning');
+    if (tables.some(t => t.number.toString() === newNumber.trim())) return notify('Ya existe', 'error');
     await addDoc(collection(db, 'tables'), { number: newNumber.trim(), description: newDesc.trim(), status: 'free', occupiedSince: null, active: true });
     setNewNumber(''); setNewDesc('');
     fetchTables();
   };
 
   const updateTable = async (id) => {
-    if (!editNumber.trim()) return alert('Identificador obligatorio');
-    if (tables.some(t => t.id !== id && t.number.toString() === editNumber.trim())) return alert('Duplicado');
+    if (!editNumber.trim()) return notify('Identificador obligatorio', 'warning');
+    if (tables.some(t => t.id !== id && t.number.toString() === editNumber.trim())) return notify('Duplicado', 'error');
     await updateDoc(doc(db, 'tables', id), { number: editNumber.trim(), description: editDesc.trim() });
     setEditId(null);
     fetchTables();
@@ -46,14 +48,15 @@ const AdminTables = () => {
   };
 
   const deleteTable = async (id) => {
-    if (window.confirm('¿Eliminar mesa?')) {
-      await deleteDoc(doc(db, 'tables', id));
-      fetchTables();
-    }
+    const respuesta = await confirm('¿Eliminar esta mesa permanentemente?');
+    if (!respuesta) return;
+    await deleteDoc(doc(db, 'tables', id));
+    notify('Mesa eliminada', 'success');
+    fetchTables();
   };
 
   const startEdit = (t) => {
-    if (t.status === 'occupied') return alert('Mesa ocupada');
+    if (t.status === 'occupied') return notify('Mesa ocupada', 'warning');
     setEditId(t.id);
     setEditNumber(t.number.toString());
     setEditDesc(t.description || '');

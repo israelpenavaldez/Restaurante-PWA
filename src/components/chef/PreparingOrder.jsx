@@ -11,7 +11,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
     const initial = {};
     batch.items.forEach(item => {
       if (item.status === 'pending' && item.quantity > 1) {
-        initial[item.id] = item.quantity;
+        initial[item.id] = 1;
       }
     });
     setReadyQuantities(initial);

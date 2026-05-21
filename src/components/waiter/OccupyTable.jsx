@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { createOrder, updateTable, getMenuCategories } from '../../services/firestoreService';
 import { Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -15,6 +16,7 @@ const OccupyTable = () => {
   const { userData } = useAuth();
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+  const { notify, prompt } = useNotification();
 
   const [clients, setClients] = useState([]);
   const [activeClientId, setActiveClientId] = useState(null);
@@ -61,10 +63,10 @@ const OccupyTable = () => {
     }
   }, [loadingMenu, realTableNumber, clients.length]);
 
-  const handleAddClient = () => {
-    const newName = prompt('Ingrese el nombre del nuevo cliente (obligatorio):');
+  const handleAddClient = async () => {
+    const newName = await prompt('Ingrese el nombre del nuevo cliente (obligatorio):');
     if (!newName || newName.trim() === '') {
-      alert('El nombre es obligatorio para órdenes adicionales');
+      notify('El nombre es obligatorio para órdenes adicionales', 'warning');
       return;
     }
     const newClient = { id: Date.now(), name: newName.trim(), orders: [] };
@@ -74,7 +76,7 @@ const OccupyTable = () => {
 
   const handleRemoveClient = (clientId) => {
     if (clients.length === 1) {
-      alert('No se puede eliminar el último cliente.');
+      notify('No se puede eliminar el último cliente.', 'warning');
       return;
     }
     setClients(prev => prev.filter(c => c.id !== clientId));
@@ -114,16 +116,16 @@ const OccupyTable = () => {
       try {
         checkWaiter();
         if (realTableNumber === null) {
-          alert('Error: número de mesa no disponible');
+          notify('Error: número de mesa no disponible', 'error');
           return;
         }
         for (const client of clients) {
           if (client.orders.length === 0) {
-            alert(`El cliente ${client.name || 'desconocido'} no tiene productos`);
+            notify(`El cliente ${client.name || 'desconocido'} no tiene productos`, 'warning');
             return;
           }
           if (clients.length > 1 && (!client.name || client.name.trim() === '')) {
-            alert('Todos los clientes adicionales deben tener nombre');
+            notify('Todos los clientes adicionales deben tener nombre', 'warning');
             return;
           }
         }
@@ -149,13 +151,13 @@ const OccupyTable = () => {
           await createOrder(orderData);
         }
         await updateTable(tableId, { status: 'occupied', occupiedSince: Timestamp.now() });
-        alert('Órdenes enviadas a cocina');
+        notify('Órdenes enviadas a cocina', 'success');
         navigate('/dashboard');
       } catch (permError) {
-        alert(permError.message);
+        notify(permError.message, 'error');
         navigate('/dashboard');
       }
-    }, (error) => alert(error.message));
+    }, (error) => notify(error.message, 'error'));
   };
 
   const activeClient = clients.find(c => c.id === activeClientId);

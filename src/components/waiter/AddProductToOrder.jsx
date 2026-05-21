@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getMenuCategories } from '../../services/firestoreService';
+import { useNotification } from '../../context/NotificationContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import Card from '../ui/Card';
@@ -21,6 +22,7 @@ const AddProductToOrder = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+  const { notify } = useNotification();
 
   useEffect(() => {
     const fetchTableNumber = async () => {
@@ -41,7 +43,7 @@ const AddProductToOrder = () => {
       if (docSnap.exists()) {
         setOrder({ id: docSnap.id, ...docSnap.data() });
       } else {
-        alert('Orden no encontrada');
+        notify('Orden no encontrada', 'error');
         navigate(`/view/${tableId}`);
       }
     };
@@ -96,7 +98,7 @@ const AddProductToOrder = () => {
       try {
         checkWaiter();
         if (tempItems.length === 0) {
-          alert('Agrega al menos un producto');
+          notify('Agrega al menos un producto', 'warning');
           return;
         }
         const orderRef = doc(db, 'orders', orderId);
@@ -106,10 +108,10 @@ const AddProductToOrder = () => {
         const newBatchId = currentBatches.length + 1;
         const newBatch = { batchId: newBatchId, timestamp: Timestamp.now(), status: 'pending', items: tempItems, deliveredAt: null };
         await updateDoc(orderRef, { batches: [...currentBatches, newBatch], status: 'pending', deliveredAt: null });
-        alert('Productos agregados como nuevo lote');
+        notify('Productos agregados como nuevo lote', 'success');
         navigate(`/view/${tableId}`);
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { createOrder, getMenuCategories } from '../../services/firestoreService';
+import { useNotification } from '../../context/NotificationContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import Card from '../ui/Card';
@@ -21,6 +22,7 @@ const AddClientToTable = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+  const { notify } = useNotification();
 
   useEffect(() => {
     const fetchTableNumber = async () => {
@@ -83,15 +85,15 @@ const AddClientToTable = () => {
       try {
         checkWaiter();
         if (realTableNumber === null) {
-          alert('Error: número de mesa no disponible');
+          notify('Error: número de mesa no disponible', 'error');
           return;
         }
         if (!clientName.trim()) {
-          alert('Debes ingresar el nombre del cliente');
+          notify('Debes ingresar el nombre del cliente', 'warning');
           return;
         }
         if (tempItems.length === 0) {
-          alert('Agrega al menos un producto');
+          notify('Agrega al menos un producto', 'warning');
           return;
         }
         const orderData = {
@@ -107,10 +109,10 @@ const AddClientToTable = () => {
           total: tempItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
         };
         await createOrder(orderData);
-        alert('Nueva orden creada');
+        notify('Nueva orden creada', 'success');
         navigate(`/view/${tableId}`);
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });

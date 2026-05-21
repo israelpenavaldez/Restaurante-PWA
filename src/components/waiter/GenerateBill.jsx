@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getMenuCategories } from '../../services/firestoreService';
+import { useNotification } from '../../context/NotificationContext';
 import { getProductCategory } from '../../utils/helpers';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
@@ -23,12 +24,13 @@ const GenerateBill = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+  const { notify } = useNotification();
 
   // Validación de billType
   useEffect(() => {
     const validTypes = ['prepay', 'final'];
     if (!validTypes.includes(billType)) {
-      alert('Tipo de factura no válido');
+      notify('Tipo de factura no válido', 'error');
       navigate(`/view/${tableId}`, { replace: true });
     }
   }, [billType, navigate, tableId]);
@@ -49,7 +51,7 @@ const GenerateBill = () => {
     const fetchData = async () => {
       const orderDoc = await getDoc(doc(db, 'orders', orderId));
       if (!orderDoc.exists()) {
-        alert('Orden no encontrada');
+        notify('Orden no encontrada', 'error');
         navigate(`/view/${tableId}`);
         return;
       }
@@ -67,14 +69,14 @@ const GenerateBill = () => {
         checkWaiter();
         if (billType === 'prepay') {
           await updateDoc(doc(db, 'orders', orderId), { prepaid: true });
-          alert('Pago anticipado registrado');
+          notify('Pago anticipado registrado', 'success');
         } else {
           await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: Timestamp.now(), paidAt: Timestamp.now() });
-          alert('Cuenta pagada');
+          notify('Cuenta pagada', 'success');
         }
         navigate(`/view/${tableId}`);
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { subscribeToAllOrders, updateOrder } from '../../services/firestoreService';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
@@ -18,6 +19,7 @@ const ChefDashboard = () => {
 
   const { checkChef } = usePermissions();
   const { withLock, isLocked } = useActionLock();
+  const { notify } = useNotification();
 
   useEffect(() => {
     const unsubscribe = subscribeToAllOrders((allOrders) => {
@@ -60,7 +62,7 @@ const ChefDashboard = () => {
         );
         await updateOrder(orderId, { batches: updatedBatches });
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });
@@ -101,7 +103,7 @@ const ChefDashboard = () => {
         });
         await updateOrder(orderId, { batches: updatedBatches });
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });
@@ -122,7 +124,7 @@ const ChefDashboard = () => {
         });
         await updateOrder(orderId, { batches: updatedBatches });
       } catch (err) {
-        alert(err.message);
+        notify(err.message, 'error');
         navigate('/dashboard');
       }
     });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { useNotification } from '../../context/NotificationContext';
 import { getRealTotal, isOrderCompletelyCancelled } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -18,6 +19,7 @@ const AdminHome = () => {
   const [loading, setLoading] = useState(true);
   const [updatingService, setUpdatingService] = useState(false);
   const [productSortBy, setProductSortBy] = useState('quantity');
+  const { notify, confirm } = useNotification();
 
   const fetchDailyMetrics = async () => {
     const startOfDay = new Date();
@@ -103,17 +105,20 @@ const AdminHome = () => {
 
   const toggleServiceStatus = async () => {
     if (metrics.isServiceOpen && metrics.occupiedTables > 0) {
-      alert(`No se puede cerrar porque hay ${metrics.occupiedTables} mesa(s) ocupada(s).`);
+      notify(`No se puede cerrar porque hay ${metrics.occupiedTables} mesa(s) ocupada(s).`, 'warning');
       return;
     }
+    const respuesta = await confirm('¿Estás seguro de cambiar el estado del servicio?');
+    if (!respuesta) return;
     setUpdatingService(true);
+    notify('Servicio actualizado', 'success');
     try {
       const newStatus = !metrics.isServiceOpen;
       await updateDoc(doc(db, 'config', 'settings'), { isServiceOpen: newStatus });
       setMetrics(prev => ({ ...prev, isServiceOpen: newStatus }));
     } catch (error) {
       console.error(error);
-      alert('No se pudo cambiar el estado del servicio');
+      notify('No se pudo cambiar el estado del servicio', 'error');
     } finally {
       setUpdatingService(false);
     }
