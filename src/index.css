@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+/* Google Fonts – Cocina de raíz */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
+
+/* Tema personalizado */
+@theme {
+  /* Paleta de colores */
+  --color-crema: #FDFBF7;
+  --color-hueso: #FFFDF5;
+  --color-chocolate-oscuro: #3E2723;
+  --color-tierra-clara: #8D6E63;
+  --color-chile-guajillo: #C62828;
+  --color-verde-nopal: #2E7D32;
+  --color-maiz-dorado: #F9A825;
+  --color-barro-claro: #D7CCC8;
+
+  /* Familias tipográficas */
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Nunito', sans-serif;
+}
+
+/* Estilos base opcionales (se pueden refinar después) */
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-crema);
+  color: var(--color-chocolate-oscuro);
+}
