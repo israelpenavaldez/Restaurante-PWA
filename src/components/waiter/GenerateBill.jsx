@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { getMenuCategories } from '../../services/firestoreService';
 import { useNotification } from '../../context/NotificationContext';
-import { getProductCategory } from '../../utils/helpers';
+import { getProductCategory, groupItemsForDisplay } from '../../utils/helpers';
 import { generateOrderPDF } from '../../utils/pdfHelpers';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
@@ -88,6 +88,7 @@ const GenerateBill = () => {
 
   const allItems = (order.batches || []).flatMap(batch => batch.items.filter(item => item.status !== 'cancelled'));
   const cancelledItems = (order.batches || []).flatMap(batch => batch.items.filter(item => item.status === 'cancelled'));
+  const groupedCancelled = groupItemsForDisplay(cancelledItems);
 
   const grouped = {};
   allItems.forEach(item => {
@@ -95,6 +96,11 @@ const GenerateBill = () => {
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(item);
   });
+
+  Object.keys(grouped).forEach(cat => {
+    grouped[cat] = groupItemsForDisplay(grouped[cat]);
+  });
+
   const total = allItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
@@ -125,15 +131,15 @@ const GenerateBill = () => {
                 </tr>
               </thead>
               <tbody>
-                {grouped[category].map(item => (
-                  <tr key={item.id} className="border-b border-barro-claro/20">
+                {grouped[category].map(group => (
+                  <tr key={group.id} className="border-b border-barro-claro/20">
                     <td className="p-2 text-chocolate-oscuro">
-                      {item.name}
-                      {item.notes && <span className="text-tierra-clara text-sm ml-2">({item.notes})</span>}
+                      {group.name}
+                      {group.notes && <span className="text-tierra-clara text-sm ml-2">({group.notes})</span>}
                     </td>
-                    <td className="p-2">{item.quantity}</td>
-                    <td className="p-2">${item.price}</td>
-                    <td className="p-2 font-bold text-maiz-dorado">${item.price * item.quantity}</td>
+                    <td className="p-2">{group.quantity}</td>
+                    <td className="p-2">${group.price}</td>
+                    <td className="p-2 font-bold text-maiz-dorado">${(group.price * group.quantity).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -142,7 +148,7 @@ const GenerateBill = () => {
         </div>
       ))}
 
-      {cancelledItems.length > 0 && (
+      {groupedCancelled.length > 0 && (
         <div className="mb-6">
           <h3 className="bg-chile-guajillo/10 text-chile-guajillo px-4 py-2 rounded-t-xl font-display font-bold">Cancelados</h3>
           <Card className="rounded-t-none">
@@ -156,12 +162,12 @@ const GenerateBill = () => {
                 </tr>
               </thead>
               <tbody>
-                {cancelledItems.map(item => (
-                  <tr key={item.id} className="border-b border-barro-claro/20 line-through text-gray-400">
-                    <td className="p-2">{item.name}</td>
-                    <td className="p-2">{item.quantity}</td>
-                    <td className="p-2">${item.price}</td>
-                    <td className="p-2">${item.price * item.quantity}</td>
+                {groupedCancelled.map(group => (
+                  <tr key={group.id} className="border-b border-barro-claro/20 line-through text-gray-400">
+                    <td className="p-2">{group.name}</td>
+                    <td className="p-2">{group.quantity}</td>
+                    <td className="p-2">${group.price}</td>
+                    <td className="p-2">${(group.price * group.quantity).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

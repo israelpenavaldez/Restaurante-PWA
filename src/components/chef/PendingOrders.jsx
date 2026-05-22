@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatElapsedTime } from '../../utils/helpers';
+import { formatElapsedTime, groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -30,10 +30,10 @@ const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
           </div>
           <div className="p-4">
             <ul className="space-y-2 text-sm text-chocolate-oscuro mb-4">
-              {batch.batch.items.slice(0, 10).map(item => (
-                <li key={item.id} className="flex justify-between border-b border-barro-claro/20 pb-1">
-                  <span>{item.name} x{item.quantity}</span>
-                  {item.notes && <span className="text-tierra-clara text-xs ml-1">({item.notes})</span>}
+              {groupItemsForDisplay(batch.batch.items).slice(0, 10).map(item => (
+                <li key={item.ids[0]}>
+                  {item.name} x{item.quantity}
+                  {item.notes && <span className="text-gray-400 ml-1">({item.notes})</span>}
                 </li>
               ))}
             </ul>

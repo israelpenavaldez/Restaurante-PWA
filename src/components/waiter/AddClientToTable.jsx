@@ -6,6 +6,7 @@ import { createOrder, getMenuCategories } from '../../services/firestoreService'
 import { useNotification } from '../../context/NotificationContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import { groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -77,8 +78,8 @@ const AddClientToTable = () => {
     setProductNotes(prev => ({ ...prev, [product.id]: '' }));
   };
 
-  const removeTempItem = (id) => {
-    setTempItems(tempItems.filter(i => i.id !== id));
+  const removeTempItems = (itemIds) => {
+    setTempItems(tempItems.filter(i => !itemIds.includes(i.id)));
   };
 
   const handleSubmit = () => {
@@ -187,11 +188,11 @@ const AddClientToTable = () => {
           <p className="text-tierra-clara">No hay productos agregados</p>
         ) : (
           <ul className="space-y-2">
-            {tempItems.map(item => (
-              <li key={item.id} className="flex justify-between items-center border-b border-barro-claro/30 pb-2">
-                <span className="text-chocolate-oscuro">{item.name} x{item.quantity} - ${item.price * item.quantity}</span>
-                {item.notes && <span className="text-tierra-clara text-sm ml-2">({item.notes})</span>}
-                <button onClick={() => removeTempItem(item.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">Eliminar</button>
+            {groupItemsForDisplay(tempItems).map(group => (
+              <li key={group.id} className="flex justify-between items-center border-b border-barro-claro/30 pb-2">
+                <span className="text-chocolate-oscuro">{group.name} x{group.quantity} - ${group.price * group.quantity}</span>
+                {group.notes && <span className="text-tierra-clara text-sm ml-2">({group.notes})</span>}
+                <button onClick={() => removeTempItem(group.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">Eliminar</button>
               </li>
             ))}
           </ul>

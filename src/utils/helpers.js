@@ -57,3 +57,45 @@ export const getProductCategory = (productName, categories) => {
   }
   return 'Otros';
 };
+/**
+ * Agrupa ítems idénticos (mismo nombre, precio, categoría, estado) que no tengan modificaciones (notes).
+ * Los ítems con notas se mantienen individuales.
+ */
+export const groupItemsForDisplay = (items) => {
+  const map = new Map();
+  items.forEach(item => {
+    const hasNotes = item.notes && item.notes.trim() !== '';
+    if (hasNotes) {
+      map.set(`note_${item.id}`, {
+        ids: [item.id],
+        name: item.name,
+        price: item.price,
+        category: item.category,
+        status: item.status,
+        notes: item.notes,
+        quantity: item.quantity,
+        originalItems: [item],
+      });
+    } else {
+      const key = `${item.name}_${item.price}_${item.category}_${item.status}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          ids: [item.id],
+          name: item.name,
+          price: item.price,
+          category: item.category,
+          status: item.status,
+          notes: '',
+          quantity: item.quantity,
+          originalItems: [item],
+        });
+      } else {
+        const group = map.get(key);
+        group.ids.push(item.id);
+        group.quantity += item.quantity;
+        group.originalItems.push(item);
+      }
+    }
+  });
+  return Array.from(map.values());
+};

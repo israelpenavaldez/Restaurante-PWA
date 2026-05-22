@@ -1,12 +1,12 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getProductCategory } from './helpers';
+import { getProductCategory, groupItemsForDisplay } from './helpers';
 
 /**
  * Genera y descarga un PDF con la cuenta de una orden.
- * @param {Object} order - Documento de orden (con batches, items, clientName, tableNumber, etc.)
- * @param {Array} categories - Arreglo de categorías del menú (para agrupar productos)
- * @param {string} [billType='final'] - 'final' o 'prepay' (para el título)
+ * @param {Object} order 
+ * @param {Array} categories 
+ * @param {string} [billType='final'] 
  */
 export const generateOrderPDF = (order, categories, billType = 'final') => {
   if (!order) return;
@@ -14,9 +14,11 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
   const allItems = (order.batches || []).flatMap(batch =>
     batch.items.filter(item => item.status !== 'cancelled')
   );
+
   const cancelledItems = (order.batches || []).flatMap(batch =>
     batch.items.filter(item => item.status === 'cancelled')
   );
+  const groupedCancelled = groupItemsForDisplay(cancelledItems);
 
   // Agrupar por categoría
   const grouped = {};
@@ -24,6 +26,10 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
     const cat = getProductCategory(item.name, categories);
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(item);
+  });
+
+  Object.keys(grouped).forEach(cat => {
+    grouped[cat] = groupItemsForDisplay(grouped[cat]);
   });
 
   const total = allItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -55,11 +61,11 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
     autoTable(doc, {
       startY: y,
       head: [['Producto', 'Cant.', 'Precio', 'Total']],
-      body: grouped[cat].map(item => [
-        item.name + (item.notes ? ` (${item.notes})` : ''),
-        item.quantity,
-        `$${item.price}`,
-        `$${(item.price * item.quantity).toFixed(2)}`
+      body: grouped[cat].map(group => [
+        group.name + (group.notes ? ` (${group.notes})` : ''),
+        group.quantity,
+        `$${group.price}`,
+        `$${(group.price * group.quantity).toFixed(2)}`
       ]),
       styles: { fontSize: 10 },
       headStyles: { fillColor: [200, 200, 200] },
@@ -77,11 +83,11 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
     autoTable(doc, {
       startY: y,
       head: [['Producto', 'Cant.', 'Precio', 'Total']],
-      body: cancelledItems.map(item => [
-        item.name,
-        item.quantity,
-        `$${item.price}`,
-        `$${(item.price * item.quantity).toFixed(2)}`
+      body: groupedCancelled.map(group => [
+        group.name,
+        group.quantity,
+        `$${group.price}`,
+        `$${(group.price * group.quantity).toFixed(2)}`
       ]),
       styles: { fontSize: 10, textColor: [150, 150, 150] },
       headStyles: { fillColor: [230, 150, 150] },

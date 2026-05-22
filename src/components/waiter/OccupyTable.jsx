@@ -7,8 +7,10 @@ import { Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import { groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+
 
 const OccupyTable = () => {
   const { tableId } = useParams();
@@ -106,9 +108,9 @@ const OccupyTable = () => {
     setProductNotes(prev => ({ ...prev, [product.id]: '' }));
   };
 
-  const removeOrder = (clientId, orderId) => {
+  const removeOrders = (clientId, itemIds) => {
     setClients(prev => prev.map(c =>
-      c.id === clientId ? { ...c, orders: c.orders.filter(o => o.id !== orderId) } : c
+      c.id === clientId ? { ...c, orders: c.orders.filter(o => !itemIds.includes(o.id)) } : c
     ));
   };
 
@@ -273,20 +275,18 @@ const OccupyTable = () => {
 
       {/* Resumen del cliente activo */}
       <Card className="mb-6">
-        <h3 className="font-display font-bold text-xl text-chocolate-oscuro mb-3">
-          Resumen de {activeClient?.name || 'cliente'}
-        </h3>
+        <h3 className="font-display font-bold text-xl text-chocolate-oscuro mb-3"> Resumen de {activeClient?.name || 'cliente'} </h3>
         {activeClient?.orders.length === 0 ? (
           <p className="text-tierra-clara">No hay productos agregados</p>
         ) : (
           <ul className="space-y-2">
-            {activeClient.orders.map(order => (
-              <li key={order.id} className="flex justify-between items-center border-b border-barro-claro/30 pb-2">
+            {groupItemsForDisplay(activeClient.orders).map(group => (
+              <li key={group.id} className="flex justify-between items-center border-b border-barro-claro/30 pb-2">
                 <span className="text-chocolate-oscuro">
-                  {order.name} x{order.quantity} - <span className="text-maiz-dorado font-bold">${order.price * order.quantity}</span>
+                  {group.name} x{group.quantity} - <span className="text-maiz-dorado font-bold">${group.price * group.quantity}</span>
                 </span>
-                {order.notes && <span className="text-tierra-clara text-sm ml-2">({order.notes})</span>}
-                <button onClick={() => removeOrder(activeClient.id, order.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">
+                {group.notes && <span className="text-tierra-clara text-sm ml-2">({group.notes})</span>}
+                <button onClick={() => removeOrder(activeClient.id, group.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">
                   Eliminar
                 </button>
               </li>
