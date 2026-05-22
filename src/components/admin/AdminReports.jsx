@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { getMenuCategories } from '../../services/firestoreService';
+import { generateOrderPDF } from '../../utils/pdfHelpers';
 import { getRealTotal, isOrderCompletelyCancelled } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -31,6 +33,7 @@ const AdminReports = () => {
   const [bottomProducts, setBottomProducts] = useState([]);
   const [productSortBy, setProductSortBy] = useState('quantity');
   const [showOrdersTable, setShowOrdersTable] = useState(false);
+  const [menuCategories, setMenuCategories] = useState([]);
 
   function getWeekNumber(d) {
     const date = new Date(d);
@@ -133,6 +136,14 @@ const AdminReports = () => {
     };
     fetchOrders();
   }, [startDate, endDate, filter, productSortBy]);
+
+  useEffect(() => {
+  const loadCategories = async () => {
+    const cats = await getMenuCategories();
+    setMenuCategories(cats);
+  };
+  loadCategories();
+}, []);
 
   const exportToExcel = () => {
     const data = allOrders.map(o => ({
@@ -325,6 +336,7 @@ const AdminReports = () => {
                   <th className="px-4 py-2 text-left">Creación</th>
                   <th className="px-4 py-2 text-left">Pago</th>
                   <th className="px-4 py-2 text-left">Total real</th>
+                  <th className="px-4 py-2 text-left">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -335,6 +347,11 @@ const AdminReports = () => {
                     <td className="px-4 py-2">{o.createdAt?.toDate().toLocaleString()}</td>
                     <td className="px-4 py-2">{o.completedAt?.toDate()?.toLocaleString() || '-'}</td>
                     <td className="px-4 py-2">${o.realTotal}</td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => generateOrderPDF(o, menuCategories, 'final')} className="text-chile-guajillo hover:text-red-800 font-medium text-sm transition" >
+                        Descargar cuenta
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

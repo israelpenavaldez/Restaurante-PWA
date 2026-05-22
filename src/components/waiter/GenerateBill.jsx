@@ -5,6 +5,7 @@ import { db } from '../../firebase/config';
 import { getMenuCategories } from '../../services/firestoreService';
 import { useNotification } from '../../context/NotificationContext';
 import { getProductCategory } from '../../utils/helpers';
+import { generateOrderPDF } from '../../utils/pdfHelpers';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import Card from '../ui/Card';
@@ -174,6 +175,9 @@ const GenerateBill = () => {
       </div>
 
       <div className="flex justify-end mt-6">
+        <Button variant="secondary" onClick={() => generateOrderPDF(order, categories, billType)}>
+          Descargar PDF
+        </Button>        
         <Button variant="success" onClick={handleConfirm} disabled={isLocked} className="px-8 py-3 text-lg">
           {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}
         </Button>
