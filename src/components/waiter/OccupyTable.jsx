@@ -7,6 +7,7 @@ import { Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import { groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -28,6 +29,7 @@ const OccupyTable = () => {
   const [productNotes, setProductNotes] = useState({});
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [realTableNumber, setRealTableNumber] = useState(null);
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     const fetchTableNumber = async () => {
@@ -296,7 +298,7 @@ const OccupyTable = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button variant="success" onClick={handleSubmit} disabled={isLocked} className="px-8 py-3 text-lg">
+        <Button variant="success" onClick={handleSubmit} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
           {isLocked ? 'Enviando...' : 'Enviar a cocina'}
         </Button>
       </div>

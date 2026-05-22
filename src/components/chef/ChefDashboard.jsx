@@ -5,6 +5,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { subscribeToAllOrders, updateOrder } from '../../services/firestoreService';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import PendingOrders from './PendingOrders';
 import PreparingOrder from './PreparingOrder';
 import Card from '../ui/Card';
@@ -20,6 +21,7 @@ const ChefDashboard = () => {
   const { checkChef } = usePermissions();
   const { withLock, isLocked } = useActionLock();
   const { notify } = useNotification();
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     const unsubscribe = subscribeToAllOrders((allOrders) => {

@@ -6,6 +6,7 @@ import { subscribeToTableOrders, updateOrder } from '../../services/firestoreSer
 import { useNotification } from '../../context/NotificationContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -17,6 +18,7 @@ const ViewTable = () => {
   const [realTableNumber, setRealTableNumber] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isOnline = useOnlineStatus();
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
@@ -221,7 +223,7 @@ const ViewTable = () => {
           <p className="text-tierra-clara text-lg">No hay órdenes activas para esta mesa.</p>
         </Card>
         <div className="flex justify-center mt-8">
-          <Button variant="primary" onClick={liberarMesa} disabled={isLocked}>
+          <Button variant="primary" onClick={liberarMesa} disabled={isLocked || !isOnline}>
             {isLocked ? 'Procesando...' : 'Liberar mesa'}
           </Button>
         </div>
@@ -245,23 +247,23 @@ const ViewTable = () => {
               <h3 className="text-2xl font-display font-bold text-chocolate-oscuro">{order.clientName}</h3>
               <div className="flex flex-wrap gap-2">
                 {!isPrepaid && (
-                  <Button variant="secondary" onClick={() => goToAddProduct(order.id)} disabled={isLocked} className="text-sm py-1 px-3">
+                  <Button variant="secondary" onClick={() => goToAddProduct(order.id)} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
                     Agregar producto
                   </Button>
                 )}
                 {!isPrepaid ? (
                   allFinalized ? (
-                    <Button variant="success" onClick={() => goToBill(order.id, 'final')} disabled={isLocked} className="text-sm py-1 px-3">
+                    <Button variant="success" onClick={() => goToBill(order.id, 'final')} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
                       Generar cuenta
                     </Button>
                   ) : (
-                    <Button variant="warning" onClick={() => goToBill(order.id, 'prepay')} disabled={isLocked} className="text-sm py-1 px-3">
+                    <Button variant="warning" onClick={() => goToBill(order.id, 'prepay')} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
                       Pago anticipado
                     </Button>
                   )
                 ) : (
                   allFinalized ? (
-                    <Button variant="success" onClick={() => handleCloseOrder(order.id)} disabled={isLocked} className="text-sm py-1 px-3">
+                    <Button variant="success" onClick={() => handleCloseOrder(order.id)} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
                       Cerrar cuenta
                     </Button>
                   ) : (
@@ -305,13 +307,13 @@ const ViewTable = () => {
                             </td>
                             <td className="px-2 py-1">
                               {item.status === 'ready' && (
-                                <button onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)} disabled={isLocked}
+                                <button onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)} disabled={isLocked || !isOnline}
                                   className="text-verde-nopal hover:text-green-800 text-sm font-medium disabled:opacity-50">
                                   Entregar
                                 </button>
                               )}
                               {item.status === 'pending' && !isPrepaid && (
-                                <button onClick={() => handleCancelItem(order.id, batch.batchId, item.id)} disabled={isLocked}
+                                <button onClick={() => handleCancelItem(order.id, batch.batchId, item.id)} disabled={isLocked || !isOnline}
                                   className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50">
                                   Cancelar
                                 </button>
@@ -330,7 +332,7 @@ const ViewTable = () => {
       })}
 
       <div className="flex justify-end mt-4">
-        <Button variant="primary" onClick={goToAddClient} disabled={isLocked}>
+        <Button variant="primary" onClick={goToAddClient} disabled={isLocked || !isOnline}>
           + Agregar Orden (Cliente)
         </Button>
       </div>

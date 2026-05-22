@@ -12,12 +12,14 @@ import AddProductToOrder from './components/waiter/AddProductToOrder';
 import AddClientToTable from './components/waiter/AddClientToTable';
 import GenerateBill from './components/waiter/GenerateBill';
 import EditCategory from './components/admin/EditCategory';
+import OfflineBanner from './components/ui/OfflineBanner';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
+          <OfflineBanner />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signout" element={<SignOut />} />

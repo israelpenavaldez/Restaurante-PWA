@@ -8,6 +8,7 @@ import { getProductCategory, groupItemsForDisplay } from '../../utils/helpers';
 import { generateOrderPDF } from '../../utils/pdfHelpers';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
@@ -26,6 +27,7 @@ const GenerateBill = () => {
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
   const { notify } = useNotification();
+  const isOnline = useOnlineStatus();
 
   // Validación de billType
   useEffect(() => {
@@ -184,7 +186,7 @@ const GenerateBill = () => {
         <Button variant="secondary" onClick={() => generateOrderPDF(order, categories, billType)}>
           Descargar PDF
         </Button>        
-        <Button variant="success" onClick={handleConfirm} disabled={isLocked} className="px-8 py-3 text-lg">
+        <Button variant="success" onClick={handleConfirm} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
           {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}
         </Button>
       </div>

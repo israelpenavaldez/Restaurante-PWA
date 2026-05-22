@@ -6,6 +6,7 @@ import { getMenuCategories } from '../../services/firestoreService';
 import { useNotification } from '../../context/NotificationContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import { groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -20,6 +21,7 @@ const AddProductToOrder = () => {
   const [tempItems, setTempItems] = useState([]);
   const [productQuantities, setProductQuantities] = useState({});
   const [productNotes, setProductNotes] = useState({});
+  const isOnline = useOnlineStatus();
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
@@ -192,7 +194,7 @@ const AddProductToOrder = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button variant="success" onClick={handleSubmit} disabled={isLocked} className="px-8 py-3 text-lg">
+        <Button variant="success" onClick={handleSubmit} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
           {isLocked ? 'Agregando...' : 'Agregar lote'}
         </Button>
       </div>

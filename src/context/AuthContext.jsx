@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       unsubscribeUserRef.current = null;
     }
     await signOut(auth);
+    sessionStorage.removeItem('cachedUserData'); // limpiar caché
   };
 
   // Login con Google (maneja primer registro y vincula contraseña después)
@@ -98,9 +99,15 @@ export const AuthProvider = ({ children }) => {
         const userDocRef = doc(db, 'users', currentUser.uid);
         const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
-            setUserData(docSnap.data());
+            const data = docSnap.data();
+            setUserData(data);
+            // Guardar en sessionStorage para recuperación offline
+            try {
+              sessionStorage.setItem('cachedUserData', JSON.stringify(data));
+            } catch (e) { /* ignorar */ }
           } else {
             setUserData(null);
+            sessionStorage.removeItem('cachedUserData');
           }
         });
         unsubscribeUserRef.current = unsubscribeSnapshot;

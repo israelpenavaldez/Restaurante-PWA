@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { formatElapsedTime } from '../../utils/helpers';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
 const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMarkItemReady, onUnmarkItemReady, isLocked }) => {
   const [readyQuantities, setReadyQuantities] = useState({});
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     const initial = {};
@@ -91,7 +93,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                       <Badge status="ready" />
                       <button
                         onClick={() => onUnmarkItemReady(orderId, batch.batchId, item.id)}
-                        disabled={isLocked}
+                        disabled={isLocked || !isOnline}
                         className="text-maiz-dorado hover:text-yellow-700 text-sm font-medium disabled:opacity-50 transition"
                         title="Desmarcar"
                       >
@@ -108,12 +110,12 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                           value={readyQuantities[item.id] ?? item.quantity}
                           onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                           className="w-16 p-1 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-center text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition"
-                          disabled={isLocked}
+                          disabled={isLocked || !isOnline}
                         />
                         <Button
                           variant="success"
                           onClick={() => onMarkItemReady(orderId, batch.batchId, item.id, readyQuantities[item.id] ?? item.quantity)}
-                          disabled={isLocked}
+                          disabled={isLocked || !isOnline}
                           className="text-sm py-1 px-3"
                         >
                           Marcar listo
@@ -123,7 +125,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                       <Button
                         variant="success"
                         onClick={() => onMarkItemReady(orderId, batch.batchId, item.id, 1)}
-                        disabled={isLocked}
+                        disabled={isLocked || !isOnline}
                         className="text-sm py-1 px-3"
                       >
                         Marcar listo
