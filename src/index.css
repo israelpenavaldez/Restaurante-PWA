@@ -12,19 +12,17 @@
   --color-fondo: #F4E9D8;              /* Fondo principal de la aplicación */
   --color-tarjeta: #FFFBF5;            /* Fondo de tarjetas, modales */
   --color-tarjeta-alt: #EBDBC5;       /* Fondos alternativos, separadores */
-  --color-fondo-inactivo: #E5E7EB;   /* Fondo para estados inactivos (gris claro) */
+  --color-fondo-inactivo: #E5E7EB;    /* Fondo para estados inactivos (gris claro) */
 
   /* ===== TEXTO ===== */
   --color-texto: #3C2A1E;             /* Texto principal */
   --color-texto-claro: #7A6555;       /* Texto secundario, placeholders */
   --color-texto-inverso: #FFFFFF;     /* Texto sobre fondos oscuros */
-
-  /* ===== TEXTOS ESPECIALES (éxito / advertencia) ===== */
-  --color-texto-exito: #2E7D32;        /* Texto para indicar éxito, más vendidos, etc. */
-  --color-texto-aviso: #C62828;        /* Texto para advertencia, menos vendidos, etc. */
+  --color-texto-exito: #2E7D32;       /* Texto para indicar éxito */
+  --color-texto-exito-hover: #1B5E20; /* Hover del texto de éxito */
+  --color-texto-aviso: #C62828;       /* Texto para advertencia */
+  --color-texto-aviso-hover: #AD1F1F; /* Hover del texto de aviso */
   --color-texto-advertencia: #E0A030;        /* Texto para advertencias (ej. botón Deshacer) */
-  --color-texto-exito-hover: #1B5E20;   /* Hover para texto de éxito */
-  --color-texto-aviso-hover: #AD1F1F;   /* Hover para texto de aviso */
   --color-texto-advertencia-hover: #C98B20;  /* Hover del texto de advertencia */
 
   /* ===== BOTONES ===== */
@@ -44,9 +42,8 @@
   --color-boton-aviso-hover: #C98B20;         /* Hover botón advertencia */
   --color-boton-aviso-texto: #3C2A1E;         /* Texto botón advertencia */
 
-  /* ===== BOTONES AUXILIARES ===== */
-  --color-boton-eliminar: #7A6555;        /* Fondo para botón de quitar imagen */
-  --color-boton-eliminar-texto: #FFFFFF;  /* Texto para botón de quitar imagen */
+  --color-boton-eliminar: #7A6555;            /* Fondo para botón de quitar/eliminar */
+  --color-boton-eliminar-texto: #FFFFFF;      /* Texto para botón de quitar/eliminar */
 
   /* ===== INSIGNIAS (BADGES) ===== */
   --color-insignia-pendiente-fondo: #FFF4E5;
@@ -72,7 +69,7 @@
   --color-borde-claro: #EDE0D4;        /* Borde suave */
 
   /* ===== ACENTOS ESPECIALES ===== */
-  --color-acento: #A84328;             /* Acento general */
+  --color-acento: #A84328;             /* Acento general (enlaces, iconos, indicadores) */
   --color-acento-hover: #8C351E;       /* Hover del acento */
   --color-fondo-desconectado: #A84328; /* Fondo banner sin conexión */
   --color-texto-desconectado: #FFFFFF; /* Texto banner sin conexión */
