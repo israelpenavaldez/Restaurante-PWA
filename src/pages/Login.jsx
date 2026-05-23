@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
@@ -14,10 +14,17 @@ const LoginView = () => {
   const [loading, setLoading] = useState(false);
   const [showPasswordSetup, setShowPasswordSetup] = useState(false);
   const [newPassword, setNewPassword] = useState('');
-  
+
   const { notify } = useNotification();
-  const { login, register, loginWithGoogle, setGoogleUserPassword } = useAuth();
+  const { user, login, register, loginWithGoogle, setGoogleUserPassword } = useAuth();
   const navigate = useNavigate();
+
+  // Redirige al dashboard si el usuario ya está autenticado
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

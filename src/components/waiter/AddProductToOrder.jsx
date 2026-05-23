@@ -165,9 +165,20 @@ const AddProductToOrder = () => {
             <h4 className="font-display font-bold text-texto">{product.name}</h4>
             <p className="text-texto-aviso font-bold text-lg mb-2">${product.price}</p>
             <div className="mt-auto space-y-2 w-full">
-              <input type="number" min="1" value={productQuantities[product.id] || 1}
-                onChange={(e) => setProductQuantities({ ...productQuantities, [product.id]: parseInt(e.target.value) || 1 })}
-                className="w-full p-1 border border-borde rounded-md text-center text-texto" />
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                min="1"
+                value={productQuantities[product.id] || 1}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, ''); // solo números
+                  if (val === '') return;
+                  setProductQuantities(prev => ({ ...prev, [product.id]: parseInt(val) || 1 }));
+                }}
+                className="w-full p-1 border border-borde rounded-md text-center text-texto"
+              />
               <input type="text" placeholder="Modificaciones"
                 value={productNotes[product.id] || ''}
                 onChange={(e) => setProductNotes({ ...productNotes, [product.id]: e.target.value })}
