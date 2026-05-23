@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import TablesTab from './TablesTab';
 import Button from '../ui/Button';
-import Card from '../ui/Card';
 
 const WaiterDashboard = () => {
   const navigate = useNavigate();
@@ -17,19 +16,26 @@ const WaiterDashboard = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 bg-fondo min-h-screen">
-      <div className="flex justify-end items-center mb-8">
-        <Card className="rounded-full px-5 py-2 flex items-center gap-3 shadow-sm">
-          <span className="font-semibold text-texto">
-            {userData?.displayName || userData?.email}
-          </span>
-          <span className="text-texto-claro text-sm">(Mesero)</span>
-          <Button variant="primary" onClick={handleLogout} className="text-sm px-3 py-1">
-            Cerrar sesión
-          </Button>
-        </Card>
+    <div className="min-h-screen bg-fondo">
+      {/* Header */}
+      <div className="bg-tarjeta shadow-md border-b border-borde-claro">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-display font-bold text-texto">Panel de Mesero</h1>
+          <div className="flex items-center space-x-4">
+            <span className="text-texto font-medium">
+              {userData?.displayName || userData?.email}
+            </span>
+            <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
+              Cerrar sesión
+            </Button>
+          </div>
+        </div>
       </div>
-      <TablesTab onOccupy={handleOccupy} onView={handleView} />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <TablesTab onOccupy={handleOccupy} onView={handleView} />
+      </div>
     </div>
   );
 };

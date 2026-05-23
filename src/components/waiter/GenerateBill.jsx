@@ -26,7 +26,7 @@ const GenerateBill = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
-  const { notify } = useNotification();
+  const { notify, confirm } = useNotification();
   const isOnline = useOnlineStatus();
 
   useEffect(() => {
@@ -69,6 +69,14 @@ const GenerateBill = () => {
     withLock(async () => {
       try {
         checkWaiter();
+
+        const mensaje = billType === 'prepay'
+          ? '¿Registrar pago anticipado?'
+          : '¿Confirmar pago de la cuenta?';
+
+        const ok = await confirm(mensaje);
+        if (!ok) return;
+
         if (billType === 'prepay') {
           await updateDoc(doc(db, 'orders', orderId), { prepaid: true });
           notify('Pago anticipado registrado', 'success');
@@ -182,7 +190,7 @@ const GenerateBill = () => {
 
       <div className="flex justify-end mt-6">
         <Button variant="secondary" onClick={() => generateOrderPDF(order, categories, billType)}>
-          Descargar PDF
+          Descargar comprobante
         </Button>        
         <Button variant="success" onClick={handleConfirm} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
           {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}

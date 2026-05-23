@@ -25,7 +25,7 @@ const AddProductToOrder = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
-  const { notify } = useNotification();
+  const { notify, confirm } = useNotification();
 
   useEffect(() => {
     const fetchTableNumber = async () => {
@@ -105,6 +105,10 @@ const AddProductToOrder = () => {
           notify('Agrega al menos un producto', 'warning');
           return;
         }
+
+        const ok = await confirm('¿Agregar este lote a la orden?');
+        if (!ok) return;
+
         const orderRef = doc(db, 'orders', orderId);
         const orderSnap = await getDoc(orderRef);
         const orderData = orderSnap.data();

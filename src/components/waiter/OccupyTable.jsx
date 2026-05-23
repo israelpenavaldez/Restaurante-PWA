@@ -18,7 +18,7 @@ const OccupyTable = () => {
   const { userData } = useAuth();
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
-  const { notify, prompt } = useNotification();
+  const { notify, confirm, prompt } = useNotification();
 
   const [clients, setClients] = useState([]);
   const [activeClientId, setActiveClientId] = useState(null);
@@ -133,6 +133,10 @@ const OccupyTable = () => {
             return;
           }
         }
+
+        const ok = await confirm('¿Enviar las órdenes a cocina?');
+        if (!ok) return;
+
         for (const client of clients) {
           let finalClientName;
           if (client.name && client.name.trim() !== '') {

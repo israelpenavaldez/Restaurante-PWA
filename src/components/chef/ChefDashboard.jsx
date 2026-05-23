@@ -141,7 +141,7 @@ const ChefDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-display font-bold text-texto">Panel de Cocina</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-texto font-medium">{userData?.displayName || userData?.email} (Cocinero)</span>
+            <span className="text-texto font-medium">{userData?.displayName || userData?.email}</span>
             <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
               Cerrar sesión
             </Button>

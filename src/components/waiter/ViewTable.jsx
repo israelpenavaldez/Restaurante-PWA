@@ -47,12 +47,21 @@ const ViewTable = () => {
     return () => unsubscribe();
   }, [realTableNumber]);
 
+  // Entregar un producto (ahora con confirmación)
   const handleDeliverItem = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
         checkWaiter();
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
+
+        const batch = order.batches.find(b => b.batchId === batchId);
+        const item = batch?.items.find(i => i.id === itemId);
+        if (!item) return;
+
+        const ok = await confirm(`¿Entregar "${item.name}"?`);
+        if (!ok) return;
+
         const updatedBatches = order.batches.map(batch => {
           if (batch.batchId !== batchId) return batch;
           const updatedItems = batch.items.map(item =>
@@ -82,6 +91,7 @@ const ViewTable = () => {
     });
   };
 
+  // Cancelar un producto (ahora permite cancelar también si está 'ready', con confirmación)
   const handleCancelItem = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
@@ -92,8 +102,11 @@ const ViewTable = () => {
           return;
         }
         const batch = order.batches.find(b => b.batchId === batchId);
-        const item = batch.items.find(i => i.id === itemId);
-        if (item.status !== 'pending') return;
+        const item = batch?.items.find(i => i.id === itemId);
+        if (!item || (item.status !== 'pending' && item.status !== 'ready')) return;
+
+        const ok = await confirm(`¿Cancelar "${item.name}"?`);
+        if (!ok) return;
 
         let quantityToCancel = item.quantity;
         if (item.quantity > 1) {
@@ -152,10 +165,13 @@ const ViewTable = () => {
     }
   };
 
+  // Cerrar cuenta (con confirmación)
   const handleCloseOrder = (orderId) => {
     withLock(async () => {
       try {
         checkWaiter();
+        const ok = await confirm('¿Cerrar cuenta y marcar como pagada?');
+        if (!ok) return;
         await updateOrder(orderId, { status: 'completed', completedAt: Timestamp.now() });
       } catch (err) {
         notify(err.message, 'error');
@@ -168,8 +184,8 @@ const ViewTable = () => {
     withLock(async () => {
       try {
         checkWaiter();
-        const respuesta = await confirm('¿Estás seguro de liberar la mesa?');
-        if (!respuesta) return;      
+        const ok = await confirm('¿Estás seguro de liberar la mesa?');
+        if (!ok) return;
         await updateDoc(doc(db, 'tables', tableId), {
           status: 'free',
           occupiedSince: null,
@@ -306,18 +322,26 @@ const ViewTable = () => {
                               <Badge status={item.status} />
                             </td>
                             <td className="px-2 py-1">
-                              {item.status === 'ready' && (
-                                <button onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)} disabled={isLocked || !isOnline}
-                                  className="text-texto-exito hover:text-texto-exito-hover text-sm font-medium disabled:opacity-50">
-                                  Entregar
-                                </button>
-                              )}
-                              {item.status === 'pending' && !isPrepaid && (
-                                <button onClick={() => handleCancelItem(order.id, batch.batchId, item.id)} disabled={isLocked || !isOnline}
-                                  className="text-acento hover:text-acento-hover text-sm font-medium disabled:opacity-50">
-                                  Cancelar
-                                </button>
-                              )}
+                              <div className="flex flex-wrap gap-2">
+                                {item.status === 'ready' && (
+                                  <button
+                                    onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)}
+                                    disabled={isLocked || !isOnline}
+                                    className="text-texto-exito hover:text-texto-exito-hover text-sm font-medium disabled:opacity-50"
+                                  >
+                                    Entregar
+                                  </button>
+                                )}
+                                {(item.status === 'pending' || item.status === 'ready') && !isPrepaid && (
+                                  <button
+                                    onClick={() => handleCancelItem(order.id, batch.batchId, item.id)}
+                                    disabled={isLocked || !isOnline}
+                                    className="text-acento hover:text-acento-hover text-sm font-medium disabled:opacity-50"
+                                  >
+                                    Cancelar
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );

@@ -25,7 +25,7 @@ const AddClientToTable = () => {
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
-  const { notify } = useNotification();
+  const { notify, confirm } = useNotification();
 
   useEffect(() => {
     const fetchTableNumber = async () => {
@@ -100,6 +100,10 @@ const AddClientToTable = () => {
           notify('Agrega al menos un producto', 'warning');
           return;
         }
+
+        const ok = await confirm('¿Crear la nueva orden?');
+        if (!ok) return;
+
         const orderData = {
           tableId: tableId,
           tableNumber: realTableNumber,
