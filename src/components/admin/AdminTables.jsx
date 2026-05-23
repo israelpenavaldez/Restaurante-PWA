@@ -82,51 +82,55 @@ const AdminTables = () => {
       </Card>
 
       <Card className="overflow-hidden !p-0">
-        <table className="min-w-full divide-y divide-borde-claro">
-          <thead className="bg-tarjeta-alt/20">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Identificador</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Descripción</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Estado</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Activo</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-borde-claro text-texto">
-            {tables.map(t => (
-              <tr key={t.id}>
-                <td className="px-6 py-4">{editId === t.id ? <input value={editNumber} onChange={e => setEditNumber(e.target.value)} className="p-1 border-b-2 border-borde bg-transparent focus:border-acento focus:outline-none" /> : t.number}</td>
-                <td className="px-6 py-4">{editId === t.id ? <input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="p-1 border-b-2 border-borde bg-transparent focus:border-acento focus:outline-none w-full" /> : t.description || '-'}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'occupied' ? 'bg-insignia-cancelado-fondo text-insignia-cancelado-texto' : 'bg-insignia-listo-fondo text-insignia-listo-texto'}`}>
-                    {t.status === 'occupied' ? 'Ocupada' : 'Libre'}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.active ? 'bg-insignia-listo-fondo text-insignia-listo-texto' : 'bg-fondo-inactivo text-texto-claro'}`}>
-                    {t.active ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 space-x-2">
-                  {editId === t.id ? (
-                    <>
-                      <button onClick={() => updateTable(t.id)} className="text-acento font-medium text-sm">Guardar</button>
-                      <button onClick={() => setEditId(null)} className="text-texto-claro text-sm">Cancelar</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => startEdit(t)} className="text-acento font-medium text-sm">Editar</button>
-                      <button onClick={() => toggleActive(t.id, t.active)} className={`text-sm font-medium ${t.active ? 'text-texto-aviso' : 'text-texto-exito'}`}>
-                        {t.active ? 'Desactivar' : 'Activar'}
-                      </button>
-                      <button onClick={() => deleteTable(t.id)} className="text-acento font-medium text-sm">Eliminar</button>
-                    </>
-                  )}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-borde-claro">
+            <thead className="bg-tarjeta-alt/20">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase whitespace-nowrap">Identificador</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase whitespace-nowrap">Descripción</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase whitespace-nowrap">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase whitespace-nowrap">Activo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase whitespace-nowrap">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-borde-claro text-texto">
+              {tables.map(t => (
+                <tr key={t.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">{editId === t.id ? <input value={editNumber} onChange={e => setEditNumber(e.target.value)} className="p-1 border-b-2 border-borde bg-transparent focus:border-acento focus:outline-none" /> : t.number}</td>
+                  <td className="px-6 py-4">{editId === t.id ? <input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="p-1 border-b-2 border-borde bg-transparent focus:border-acento focus:outline-none w-full" /> : t.description || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'occupied' ? 'bg-insignia-cancelado-fondo text-insignia-cancelado-texto' : 'bg-insignia-listo-fondo text-insignia-listo-texto'}`}>
+                      {t.status === 'occupied' ? 'Ocupada' : 'Libre'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.active ? 'bg-insignia-listo-fondo text-insignia-listo-texto' : 'bg-fondo-inactivo text-texto-claro'}`}>
+                      {t.active ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      {editId === t.id ? (
+                        <>
+                          <button onClick={() => updateTable(t.id)} className="text-acento font-medium text-sm">Guardar</button>
+                          <button onClick={() => setEditId(null)} className="text-texto-claro text-sm">Cancelar</button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => startEdit(t)} className="text-acento font-medium text-sm">Editar</button>
+                          <button onClick={() => toggleActive(t.id, t.active)} className={`text-sm font-medium ${t.active ? 'text-texto-aviso' : 'text-texto-exito'}`}>
+                            {t.active ? 'Desactivar' : 'Activar'}
+                          </button>
+                          <button onClick={() => deleteTable(t.id)} className="text-acento font-medium text-sm">Eliminar</button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
       {tables.length === 0 && <p className="text-texto-claro text-center mt-8">No hay mesas</p>}
     </div>
