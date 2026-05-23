@@ -3,10 +3,10 @@
  * @param {string} variant - 'primary' | 'secondary' | 'success' | 'warning'
  */
 const variants = {
-  primary: 'bg-chile-guajillo hover:bg-red-700 text-white',
-  secondary: 'bg-barro-claro hover:bg-brown-300 text-chocolate-oscuro',
-  success: 'bg-verde-nopal hover:bg-green-700 text-white',
-  warning: 'bg-maiz-dorado hover:bg-yellow-600 text-chocolate-oscuro',
+  primary: 'bg-boton-primario hover:bg-boton-primario-hover text-boton-primario-texto',
+  secondary: 'bg-boton-secundario hover:bg-boton-secundario-hover text-boton-secundario-texto',
+  success: 'bg-boton-exito hover:bg-boton-exito-hover text-boton-exito-texto',
+  warning: 'bg-boton-aviso hover:bg-boton-aviso-hover text-boton-aviso-texto',
 };
 
 export default function Button({

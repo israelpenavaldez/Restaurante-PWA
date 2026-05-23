@@ -35,16 +35,16 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-crema">
+    <div className="min-h-screen bg-fondo">
       {/* Header */}
-      <div className="bg-hueso shadow-md border-b border-barro-claro/30">
+      <div className="bg-tarjeta shadow-md border-b border-borde-claro">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-display font-bold text-chocolate-oscuro">
+            <h1 className="text-2xl font-display font-bold text-texto">
               Panel Administrador
             </h1>
             <div className="flex items-center space-x-4">
-              <span className="text-tierra-clara font-medium">
+              <span className="text-texto-claro font-medium">
                 {userData?.displayName || userData?.email}
               </span>
               <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-barro-claro/30 bg-hueso">
+      <div className="border-b border-borde-claro bg-tarjeta">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8 overflow-x-auto">
             {tabs.map((tab) => (
@@ -65,8 +65,8 @@ const AdminDashboard = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition ${
                   activeTab === tab.id
-                    ? 'border-chile-guajillo text-chile-guajillo'
-                    : 'border-transparent text-tierra-clara hover:text-chocolate-oscuro hover:border-barro-claro'
+                    ? 'border-acento text-acento'
+                    : 'border-transparent text-texto-claro hover:text-texto hover:border-borde'
                 }`}
               >
                 {tab.label}

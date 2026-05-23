@@ -1,30 +1,88 @@
 @import "tailwindcss";
 
-/* Google Fonts – Cocina de raíz */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
 
 /* Tema personalizado */
 @theme {
-  /* Paleta de colores */
-  --color-crema: #F5F5DC;
-  --color-hueso: #F2EBE3;
-  --color-chocolate-oscuro: #3E2723;
-  --color-tierra-clara: #8D6E63;
-  --color-chile-guajillo: #C62828;
-  --color-verde-nopal: #2E7D32;
-  --color-maiz-dorado: #F9A825;
-  --color-barro-claro: #E2725B;
+  /* Fuentes */
+  --font-display: 'Playfair Display', serif;   /* Títulos y encabezados */
+  --font-body: 'Nunito', sans-serif;           /* Texto general, botones, párrafos */
 
-  /* Familias tipográficas */
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'Nunito', sans-serif;
+  /* ===== SUPERFICIES ===== */
+  --color-fondo: #F4E9D8;              /* Fondo principal de la aplicación */
+  --color-tarjeta: #FFFBF5;            /* Fondo de tarjetas, modales */
+  --color-tarjeta-alt: #EBDBC5;       /* Fondos alternativos, separadores */
+  --color-fondo-inactivo: #E5E7EB;   /* Fondo para estados inactivos (gris claro) */
+
+  /* ===== TEXTO ===== */
+  --color-texto: #3C2A1E;             /* Texto principal */
+  --color-texto-claro: #7A6555;       /* Texto secundario, placeholders */
+  --color-texto-inverso: #FFFFFF;     /* Texto sobre fondos oscuros */
+
+  /* ===== TEXTOS ESPECIALES (éxito / advertencia) ===== */
+  --color-texto-exito: #2E7D32;        /* Texto para indicar éxito, más vendidos, etc. */
+  --color-texto-aviso: #C62828;        /* Texto para advertencia, menos vendidos, etc. */
+  --color-texto-advertencia: #E0A030;        /* Texto para advertencias (ej. botón Deshacer) */
+  --color-texto-exito-hover: #1B5E20;   /* Hover para texto de éxito */
+  --color-texto-aviso-hover: #AD1F1F;   /* Hover para texto de aviso */
+  --color-texto-advertencia-hover: #C98B20;  /* Hover del texto de advertencia */
+
+  /* ===== BOTONES ===== */
+  --color-boton-primario: #C15B3D;            /* Fondo botón primario */
+  --color-boton-primario-hover: #A84A30;      /* Hover botón primario */
+  --color-boton-primario-texto: #FFFFFF;      /* Texto botón primario */
+
+  --color-boton-secundario: #D9C4B0;          /* Fondo botón secundario */
+  --color-boton-secundario-hover: #C4AF9B;    /* Hover botón secundario */
+  --color-boton-secundario-texto: #3C2A1E;    /* Texto botón secundario */
+
+  --color-boton-exito: #557A45;               /* Fondo botón éxito */
+  --color-boton-exito-hover: #456838;         /* Hover botón éxito */
+  --color-boton-exito-texto: #FFFFFF;         /* Texto botón éxito */
+
+  --color-boton-aviso: #E0A030;               /* Fondo botón advertencia */
+  --color-boton-aviso-hover: #C98B20;         /* Hover botón advertencia */
+  --color-boton-aviso-texto: #3C2A1E;         /* Texto botón advertencia */
+
+  /* ===== BOTONES AUXILIARES ===== */
+  --color-boton-eliminar: #7A6555;        /* Fondo para botón de quitar imagen */
+  --color-boton-eliminar-texto: #FFFFFF;  /* Texto para botón de quitar imagen */
+
+  /* ===== INSIGNIAS (BADGES) ===== */
+  --color-insignia-pendiente-fondo: #FFF4E5;
+  --color-insignia-pendiente-texto: #B85C00;
+  --color-insignia-listo-fondo: #E8F0E5;
+  --color-insignia-listo-texto: #2E5A2E;
+  --color-insignia-entregado-fondo: #EEF0F1;
+  --color-insignia-entregado-texto: #4B5A5E;
+  --color-insignia-cancelado-fondo: #FDE8E8;
+  --color-insignia-cancelado-texto: #A81818;
+
+  /* ===== TOASTS (notificaciones emergentes) ===== */
+  --color-aviso-exito-fondo: #557A45;
+  --color-aviso-exito-texto: #FFFFFF;
+  --color-aviso-error-fondo: #A84328;
+  --color-aviso-error-texto: #FFFFFF;
+  --color-aviso-alerta-fondo: #E0A030;
+  --color-aviso-alerta-texto: #3C2A1E;
+
+  /* ===== BORDES ===== */
+  --color-borde: #D9C4B0;              /* Borde estándar */
+  --color-borde-foco: #C15B3D;         /* Borde al enfocar input/select */
+  --color-borde-claro: #EDE0D4;        /* Borde suave */
+
+  /* ===== ACENTOS ESPECIALES ===== */
+  --color-acento: #A84328;             /* Acento general */
+  --color-acento-hover: #8C351E;       /* Hover del acento */
+  --color-fondo-desconectado: #A84328; /* Fondo banner sin conexión */
+  --color-texto-desconectado: #FFFFFF; /* Texto banner sin conexión */
 }
 
-/* Estilos base opcionales (se pueden refinar después) */
+/* Estilos base */
 body {
   font-family: var(--font-body);
-  background-color: var(--color-crema);
-  color: var(--color-chocolate-oscuro);
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
 }
 
 /* Animación para toasts */

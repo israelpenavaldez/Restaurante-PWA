@@ -210,17 +210,17 @@ const ViewTable = () => {
   };
 
   if (loading || realTableNumber === null) {
-    return <div className="text-center mt-10 text-tierra-clara">Cargando órdenes...</div>;
+    return <div className="text-center mt-10 text-texto-claro">Cargando órdenes...</div>;
   }
 
   if (orders.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto p-4 bg-crema min-h-screen">
-        <button onClick={() => navigate('/dashboard')} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+      <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
+        <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
           ← Volver
         </button>
         <Card className="text-center p-8">
-          <p className="text-tierra-clara text-lg">No hay órdenes activas para esta mesa.</p>
+          <p className="text-texto-claro text-lg">No hay órdenes activas para esta mesa.</p>
         </Card>
         <div className="flex justify-center mt-8">
           <Button variant="primary" onClick={liberarMesa} disabled={isLocked || !isOnline}>
@@ -232,11 +232,11 @@ const ViewTable = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-crema min-h-screen">
-      <button onClick={() => navigate('/dashboard')} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+    <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
+      <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
-      <h2 className="text-3xl font-display font-bold text-chocolate-oscuro mb-6">Mesa {realTableNumber} - Órdenes</h2>
+      <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa {realTableNumber} - Órdenes</h2>
 
       {orders.map(order => {
         const isPrepaid = order.prepaid === true;
@@ -244,7 +244,7 @@ const ViewTable = () => {
         return (
           <Card key={order.id} className="mb-6">
             <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
-              <h3 className="text-2xl font-display font-bold text-chocolate-oscuro">{order.clientName}</h3>
+              <h3 className="text-2xl font-display font-bold text-texto">{order.clientName}</h3>
               <div className="flex flex-wrap gap-2">
                 {!isPrepaid && (
                   <Button variant="secondary" onClick={() => goToAddProduct(order.id)} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
@@ -267,38 +267,38 @@ const ViewTable = () => {
                       Cerrar cuenta
                     </Button>
                   ) : (
-                    <span className="text-tierra-clara italic self-center">Pagado por anticipado</span>
+                    <span className="text-texto-claro italic self-center">Pagado por anticipado</span>
                   )
                 )}
               </div>
             </div>
 
             {order.batches.map(batch => (
-              <div key={batch.batchId} className="mb-4 border-2 border-dashed border-barro-claro rounded-xl p-3">
-                <div className="bg-barro-claro/20 rounded-lg p-2 text-sm font-medium mb-2 flex justify-between items-center">
+              <div key={batch.batchId} className="mb-4 border-2 border-dashed border-borde rounded-xl p-3">
+                <div className="bg-tarjeta-alt/20 rounded-lg p-2 text-sm font-medium mb-2 flex justify-between items-center">
                   <span>Lote #{batch.batchId} - {batch.timestamp?.toDate().toLocaleTimeString()}</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-barro-claro/30">
-                    <thead className="bg-barro-claro/10">
+                  <table className="min-w-full divide-y divide-borde-claro">
+                    <thead className="bg-tarjeta-alt/10">
                       <tr>
-                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Producto</th>
-                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Cant.</th>
-                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Precio</th>
-                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Estado</th>
-                        <th className="px-2 py-1 text-left text-chocolate-oscuro">Acciones</th>
+                        <th className="px-2 py-1 text-left text-texto">Producto</th>
+                        <th className="px-2 py-1 text-left text-texto">Cant.</th>
+                        <th className="px-2 py-1 text-left text-texto">Precio</th>
+                        <th className="px-2 py-1 text-left text-texto">Estado</th>
+                        <th className="px-2 py-1 text-left text-texto">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       {batch.items.map(item => {
                         let rowClass = '';
-                        if (item.status === 'delivered') rowClass = 'text-gray-400 line-through';
-                        if (item.status === 'cancelled') rowClass = 'text-red-400 line-through';
+                        if (item.status === 'delivered') rowClass = 'text-texto-claro line-through';
+                        if (item.status === 'cancelled') rowClass = 'text-insignia-cancelado-texto line-through';
                         return (
                           <tr key={item.id} className={rowClass}>
                             <td className="px-2 py-1">
                               {item.name}
-                              {item.notes && <div className="text-xs text-tierra-clara">{item.notes}</div>}
+                              {item.notes && <div className="text-xs text-texto-claro">{item.notes}</div>}
                             </td>
                             <td className="px-2 py-1">{item.quantity}</td>
                             <td className="px-2 py-1">${item.price}</td>
@@ -308,13 +308,13 @@ const ViewTable = () => {
                             <td className="px-2 py-1">
                               {item.status === 'ready' && (
                                 <button onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)} disabled={isLocked || !isOnline}
-                                  className="text-verde-nopal hover:text-green-800 text-sm font-medium disabled:opacity-50">
+                                  className="text-texto-exito hover:text-texto-exito-hover text-sm font-medium disabled:opacity-50">
                                   Entregar
                                 </button>
                               )}
                               {item.status === 'pending' && !isPrepaid && (
                                 <button onClick={() => handleCancelItem(order.id, batch.batchId, item.id)} disabled={isLocked || !isOnline}
-                                  className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50">
+                                  className="text-acento hover:text-acento-hover text-sm font-medium disabled:opacity-50">
                                   Cancelar
                                 </button>
                               )}

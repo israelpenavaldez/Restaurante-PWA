@@ -17,8 +17,8 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-crema">
-        <p className="text-tierra-clara font-body text-lg">Cargando...</p>
+      <div className="flex justify-center items-center min-h-screen bg-fondo">
+        <p className="text-texto-claro font-body text-lg">Cargando...</p>
       </div>
     );
   }
@@ -31,18 +31,15 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     const cached = sessionStorage.getItem('cachedUserData');
     if (cached) {
       const parsed = JSON.parse(cached);
-      // si el usuario está autenticado y la caché coincide con el uid, continuamos
       if (parsed && user?.uid) {
-        // permitimos que la app cargue normalmente, el banner offline ya se muestra
         return children;
       }
     }
-    // Si no hay caché, mostramos un mensaje de reconexión, no la pantalla de "pendiente"
     return (
-      <div className="flex justify-center items-center min-h-screen bg-crema">
+      <div className="flex justify-center items-center min-h-screen bg-fondo">
         <Card className="max-w-md text-center">
-          <h2 className="text-2xl font-display font-bold text-chile-guajillo mb-2">Sin conexión</h2>
-          <p className="text-tierra-clara mb-4">Recuperando datos... Por favor, espera mientras se restablece la conexión.</p>
+          <h2 className="text-2xl font-display font-bold text-acento mb-2">Sin conexión</h2>
+          <p className="text-texto-claro mb-4">Recuperando datos... Por favor, espera mientras se restablece la conexión.</p>
         </Card>
       </div>
     );
@@ -50,12 +47,12 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (!isServiceOpen && userData?.role !== 'admin') {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-crema">
+      <div className="flex justify-center items-center min-h-screen bg-fondo">
         <Card className="max-w-md text-center">
-          <h2 className="text-2xl font-display font-bold text-chile-guajillo mb-2">
+          <h2 className="text-2xl font-display font-bold text-acento mb-2">
             Restaurante cerrado
           </h2>
-          <p className="text-tierra-clara mb-4">
+          <p className="text-texto-claro mb-4">
             El restaurante no está abierto en este momento. Por favor, intenta más tarde.
           </p>
           <Button onClick={handleLogout} variant="primary">
@@ -68,12 +65,12 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (!userData?.enabled || userData?.role === 'pending') {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-crema">
+      <div className="flex justify-center items-center min-h-screen bg-fondo">
         <Card className="max-w-md text-center">
-          <h2 className="text-2xl font-display font-bold text-maiz-dorado mb-2">
+          <h2 className="text-2xl font-display font-bold text-texto-aviso mb-2">
             Cuenta pendiente de aprobación
           </h2>
-          <p className="text-tierra-clara mb-4">
+          <p className="text-texto-claro mb-4">
             Tu cuenta está en espera de ser activada por el administrador.
           </p>
           <Button onClick={handleLogout} variant="primary">

@@ -62,33 +62,33 @@ const AdminEmployees = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando empleados...</div>;
+  if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando empleados...</div>;
 
   return (
     <div>
-      <h2 className="text-2xl font-display font-bold text-chocolate-oscuro mb-6">Gestión de empleados</h2>
+      <h2 className="text-2xl font-display font-bold text-texto mb-6">Gestión de empleados</h2>
 
       {isServiceOpen && (
-        <div className="mb-4 text-center text-chile-guajillo bg-chile-guajillo/10 px-4 py-2 rounded-full text-sm">
+        <div className="mb-4 text-center text-acento bg-acento/10 px-4 py-2 rounded-full text-sm">
           Cierre el servicio para gestionar empleados
         </div>
       )}
 
       <Card className="overflow-hidden !p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-barro-claro/30">
-            <thead className="bg-barro-claro/20">
+          <table className="min-w-full divide-y divide-borde-claro">
+            <thead className="bg-tarjeta-alt/20">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Rol</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase tracking-wider">Acciones</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase tracking-wider">Nombre</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-barro-claro/20">
+            <tbody className="divide-y divide-borde-claro">
               {employees.map(emp => (
-                <tr key={emp.id} className="text-chocolate-oscuro">
+                <tr key={emp.id} className="text-texto">
                   <td className="px-6 py-4 whitespace-nowrap">{emp.displayName || 'Sin nombre'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{emp.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -97,7 +97,7 @@ const AdminEmployees = () => {
                         value={emp.role}
                         onChange={e => updateRole(emp.id, e.target.value)}
                         disabled={isServiceOpen}
-                        className="p-1 border-b-2 border-barro-claro bg-transparent rounded-t-md text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none transition disabled:opacity-50"
+                        className="p-1 border-b-2 border-borde bg-transparent rounded-t-md text-texto text-sm focus:border-acento focus:outline-none transition disabled:opacity-50"
                       >
                         <option value="waiter">Mesero</option>
                         <option value="chef">Cocinero</option>
@@ -108,19 +108,19 @@ const AdminEmployees = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      emp.enabled ? 'bg-verde-nopal/20 text-green-800' : 'bg-chile-guajillo/10 text-red-800'
+                      emp.enabled ? 'bg-insignia-listo-fondo text-insignia-listo-texto' : 'bg-insignia-cancelado-fondo text-insignia-cancelado-texto'
                     }`}>
                       {emp.enabled ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className="px-6 py-4 space-x-2 whitespace-nowrap">
                     {editingRole === emp.id ? (
-                      <button onClick={() => setEditingRole(null)} className="text-tierra-clara hover:text-chocolate-oscuro text-sm">Cancelar</button>
+                      <button onClick={() => setEditingRole(null)} className="text-texto-claro hover:text-texto text-sm">Cancelar</button>
                     ) : (
                       <button
                         onClick={() => setEditingRole(emp.id)}
                         disabled={isServiceOpen}
-                        className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-acento hover:text-acento-hover text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Editar rol
                       </button>
@@ -128,14 +128,14 @@ const AdminEmployees = () => {
                     <button
                       onClick={() => toggleStatus(emp.id, emp.enabled)}
                       disabled={isServiceOpen}
-                      className={`text-sm font-medium ${emp.enabled ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`text-sm font-medium ${emp.enabled ? 'text-texto-aviso hover:texto-aviso-hover' : 'text-texto-exito hover:texto-exito-hover'} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {emp.enabled ? 'Deshabilitar' : 'Habilitar'}
                     </button>
                     <button
                       onClick={() => deleteEmp(emp.id)}
                       disabled={isServiceOpen}
-                      className="text-chile-guajillo hover:text-red-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-acento hover:text-acento-hover text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Eliminar
                     </button>
@@ -146,7 +146,7 @@ const AdminEmployees = () => {
           </table>
         </div>
       </Card>
-      {employees.length === 0 && <p className="text-tierra-clara text-center mt-8">No hay empleados registrados</p>}
+      {employees.length === 0 && <p className="text-texto-claro text-center mt-8">No hay empleados registrados</p>}
     </div>
   );
 };

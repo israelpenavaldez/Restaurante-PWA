@@ -29,7 +29,6 @@ const GenerateBill = () => {
   const { notify } = useNotification();
   const isOnline = useOnlineStatus();
 
-  // Validación de billType
   useEffect(() => {
     const validTypes = ['prepay', 'final'];
     if (!validTypes.includes(billType)) {
@@ -85,7 +84,7 @@ const GenerateBill = () => {
     });
   };
 
-  if (loading || realTableNumber === null) return <div className="text-center mt-10 text-tierra-clara">Cargando cuenta...</div>;
+  if (loading || realTableNumber === null) return <div className="text-center mt-10 text-texto-claro">Cargando cuenta...</div>;
   if (!order) return null;
 
   const allItems = (order.batches || []).flatMap(batch => batch.items.filter(item => item.status !== 'cancelled'));
@@ -98,7 +97,6 @@ const GenerateBill = () => {
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(item);
   });
-
   Object.keys(grouped).forEach(cat => {
     grouped[cat] = groupItemsForDisplay(grouped[cat]);
   });
@@ -106,26 +104,26 @@ const GenerateBill = () => {
   const total = allItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="max-w-3xl mx-auto p-4 bg-crema min-h-screen">
-      <button onClick={() => navigate(`/view/${tableId}`)} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+    <div className="max-w-3xl mx-auto p-4 bg-fondo min-h-screen">
+      <button onClick={() => navigate(`/view/${tableId}`)} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
 
-      <Card className="text-center mb-6 border-b-4 border-barro-claro">
-        <h2 className="text-2xl font-display font-bold text-chocolate-oscuro">
+      <Card className="text-center mb-6 border-b-4 border-borde">
+        <h2 className="text-2xl font-display font-bold text-texto">
           {billType === 'prepay' ? 'Pago anticipado' : 'Cuenta final'} - Mesa {realTableNumber}
         </h2>
-        <p className="text-chocolate-oscuro"><strong>Cliente:</strong> {order.clientName}</p>
-        <p className="text-tierra-clara"><strong>Fecha:</strong> {new Date().toLocaleString()}</p>
+        <p className="text-texto"><strong>Cliente:</strong> {order.clientName}</p>
+        <p className="text-texto-claro"><strong>Fecha:</strong> {new Date().toLocaleString()}</p>
       </Card>
 
       {Object.keys(grouped).map(category => (
         <div key={category} className="mb-6">
-          <h3 className="bg-barro-claro/30 text-chocolate-oscuro px-4 py-2 rounded-t-xl font-display font-bold">{category}</h3>
+          <h3 className="bg-tarjeta-alt/30 text-texto px-4 py-2 rounded-t-xl font-display font-bold">{category}</h3>
           <Card className="rounded-t-none">
             <table className="w-full">
               <thead>
-                <tr className="text-chocolate-oscuro border-b border-barro-claro/30">
+                <tr className="text-texto border-b border-borde-claro">
                   <th className="text-left p-2">Producto</th>
                   <th className="text-left p-2">Cant.</th>
                   <th className="text-left p-2">Precio</th>
@@ -134,14 +132,14 @@ const GenerateBill = () => {
               </thead>
               <tbody>
                 {grouped[category].map(group => (
-                  <tr key={group.id} className="border-b border-barro-claro/20">
-                    <td className="p-2 text-chocolate-oscuro">
+                  <tr key={group.ids[0]} className="border-b border-borde-claro">
+                    <td className="p-2 text-texto">
                       {group.name}
-                      {group.notes && <span className="text-tierra-clara text-sm ml-2">({group.notes})</span>}
+                      {group.notes && <span className="text-texto-claro text-sm ml-2">({group.notes})</span>}
                     </td>
                     <td className="p-2">{group.quantity}</td>
                     <td className="p-2">${group.price}</td>
-                    <td className="p-2 font-bold text-maiz-dorado">${(group.price * group.quantity).toFixed(2)}</td>
+                    <td className="p-2 font-bold text-texto-aviso">${(group.price * group.quantity).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -152,11 +150,11 @@ const GenerateBill = () => {
 
       {groupedCancelled.length > 0 && (
         <div className="mb-6">
-          <h3 className="bg-chile-guajillo/10 text-chile-guajillo px-4 py-2 rounded-t-xl font-display font-bold">Cancelados</h3>
+          <h3 className="bg-acento/10 text-acento px-4 py-2 rounded-t-xl font-display font-bold">Cancelados</h3>
           <Card className="rounded-t-none">
             <table className="w-full">
               <thead>
-                <tr className="text-gray-400 border-b border-barro-claro/30">
+                <tr className="text-texto-claro border-b border-borde-claro">
                   <th className="text-left p-2">Producto</th>
                   <th className="text-left p-2">Cant.</th>
                   <th className="text-left p-2">Precio</th>
@@ -165,7 +163,7 @@ const GenerateBill = () => {
               </thead>
               <tbody>
                 {groupedCancelled.map(group => (
-                  <tr key={group.id} className="border-b border-barro-claro/20 line-through text-gray-400">
+                  <tr key={group.ids[0]} className="border-b border-borde-claro line-through text-texto-claro">
                     <td className="p-2">{group.name}</td>
                     <td className="p-2">{group.quantity}</td>
                     <td className="p-2">${group.price}</td>
@@ -178,8 +176,8 @@ const GenerateBill = () => {
         </div>
       )}
 
-      <div className="text-right mt-6 pt-4 border-t-2 border-barro-claro">
-        <h3 className="text-2xl font-display font-bold text-chocolate-oscuro">Total a pagar: <span className="text-chile-guajillo">${total}</span></h3>
+      <div className="text-right mt-6 pt-4 border-t-2 border-borde">
+        <h3 className="text-2xl font-display font-bold text-texto">Total a pagar: <span className="text-acento">${total}</span></h3>
       </div>
 
       <div className="flex justify-end mt-6">

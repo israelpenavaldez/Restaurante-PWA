@@ -46,16 +46,16 @@ const TablesTab = ({ onOccupy, onView }) => {
     return () => unsubscribes.forEach(unsub => unsub());
   }, [tables]);
 
-  if (loading) return <div className="text-center text-tierra-clara font-body mt-10">Cargando mesas...</div>;
+  if (loading) return <div className="text-center text-texto-claro font-body mt-10">Cargando mesas...</div>;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
       {tables.map((table) => (
-        <Card key={table.id} className="border-l-4 border-chile-guajillo flex flex-col">
-          <h3 className="text-2xl font-display font-bold text-chocolate-oscuro mb-2">
+        <Card key={table.id} className="border-l-4 border-acento flex flex-col">
+          <h3 className="text-2xl font-display font-bold text-texto mb-2">
             Mesa {table.number}
           </h3>
-          <p className={`mb-4 font-semibold ${table.status === 'occupied' ? 'text-chile-guajillo' : 'text-verde-nopal'}`}>
+          <p className={`mb-4 font-semibold ${table.status === 'occupied' ? 'text-acento' : 'text-texto-exito'}`}>
             {table.status === 'occupied' ? 'Ocupada' : 'Libre'}
           </p>
 
@@ -66,11 +66,11 @@ const TablesTab = ({ onOccupy, onView }) => {
           ) : (
             <div className="mt-auto">
               <div className="flex justify-between items-center mb-3">
-                <p className="text-sm text-tierra-clara">
+                <p className="text-sm text-texto-claro">
                   Tiempo: {formatElapsedTime(table.occupiedSince)}
                 </p>
                 {readyCounts[table.id] > 0 && (
-                  <span className="bg-verde-nopal text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-insignia-listo-fondo text-insignia-listo-texto text-xs font-bold px-2 py-1 rounded-full">
                     {readyCounts[table.id]} listo{readyCounts[table.id] !== 1 ? 's' : ''}
                   </span>
                 )}

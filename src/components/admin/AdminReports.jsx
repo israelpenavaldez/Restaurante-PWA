@@ -138,12 +138,12 @@ const AdminReports = () => {
   }, [startDate, endDate, filter, productSortBy]);
 
   useEffect(() => {
-  const loadCategories = async () => {
-    const cats = await getMenuCategories();
-    setMenuCategories(cats);
-  };
-  loadCategories();
-}, []);
+    const loadCategories = async () => {
+      const cats = await getMenuCategories();
+      setMenuCategories(cats);
+    };
+    loadCategories();
+  }, []);
 
   const exportToExcel = () => {
     const data = allOrders.map(o => ({
@@ -210,12 +210,12 @@ const AdminReports = () => {
     doc.save(`reporte_${filter}_${startDate?.toISOString().slice(0, 10)}.pdf`);
   };
 
-  if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando reportes...</div>;
+  if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando reportes...</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-display font-bold text-chocolate-oscuro">Reportes de ventas</h2>
+        <h2 className="text-2xl font-display font-bold text-texto">Reportes de ventas</h2>
         <div className="flex gap-2">
           <Button variant="success" onClick={exportToExcel}>Exportar Excel</Button>
           <Button variant="primary" onClick={exportToPDF}>Exportar PDF</Button>
@@ -225,14 +225,14 @@ const AdminReports = () => {
       <Card className="mb-6">
         <div className="flex flex-wrap gap-4 items-end">
           <div>
-            <label className="block font-medium text-chocolate-oscuro mb-1">Tipo</label>
+            <label className="block font-medium text-texto mb-1">Tipo</label>
             <div className="flex gap-1">
               {['day', 'week', 'month'].map(opt => (
                 <button
                   key={opt}
                   onClick={() => setFilter(opt)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-                    filter === opt ? 'bg-chile-guajillo text-white' : 'bg-barro-claro/30 text-chocolate-oscuro hover:bg-barro-claro/50'
+                    filter === opt ? 'bg-acento text-texto-inverso' : 'bg-tarjeta-alt/30 text-texto hover:bg-tarjeta-alt/50'
                   }`}
                 >
                   {opt === 'day' ? 'Día' : opt === 'week' ? 'Semana' : 'Mes'}
@@ -241,48 +241,48 @@ const AdminReports = () => {
             </div>
           </div>
           <div>
-            <label className="block font-medium text-chocolate-oscuro mb-1">
+            <label className="block font-medium text-texto mb-1">
               {filter === 'day' ? 'Fecha' : filter === 'week' ? 'Inicio de semana' : 'Mes'}
             </label>
-            {filter === 'day' && <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />}
-            {filter === 'week' && <input type="week" value={selectedWeek} onChange={e => setSelectedWeek(e.target.value)} className="p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />}
-            {filter === 'month' && <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />}
+            {filter === 'day' && <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />}
+            {filter === 'week' && <input type="week" value={selectedWeek} onChange={e => setSelectedWeek(e.target.value)} className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />}
+            {filter === 'month' && <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />}
           </div>
         </div>
-        <p className="text-sm text-tierra-clara mt-3">
+        <p className="text-sm text-texto-claro mt-3">
           Período: {startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
         </p>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm uppercase tracking-wide">Ventas totales</h3>
-          <p className="text-2xl font-display font-bold text-chile-guajillo">${metrics.totalSales.toFixed(2)}</p>
+          <h3 className="text-texto-claro text-sm uppercase tracking-wide">Ventas totales</h3>
+          <p className="text-2xl font-display font-bold text-acento">${metrics.totalSales.toFixed(2)}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm uppercase tracking-wide">Órdenes</h3>
-          <p className="text-2xl font-display font-bold text-chocolate-oscuro">{metrics.totalOrders}</p>
+          <h3 className="text-texto-claro text-sm uppercase tracking-wide">Órdenes</h3>
+          <p className="text-2xl font-display font-bold text-texto">{metrics.totalOrders}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm uppercase tracking-wide">Ticket promedio</h3>
-          <p className="text-2xl font-display font-bold text-chocolate-oscuro">${metrics.averageTicket.toFixed(2)}</p>
+          <h3 className="text-texto-claro text-sm uppercase tracking-wide">Ticket promedio</h3>
+          <p className="text-2xl font-display font-bold text-texto">${metrics.averageTicket.toFixed(2)}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm uppercase tracking-wide">Tiempo promedio</h3>
-          <p className="text-lg text-chocolate-oscuro">Orden: {metrics.averageServiceTime.toFixed(0)} min</p>
-          <p className="text-lg text-chocolate-oscuro">Lote: {metrics.averageBatchTime.toFixed(0)} min</p>
+          <h3 className="text-texto-claro text-sm uppercase tracking-wide">Tiempo promedio</h3>
+          <p className="text-lg text-texto">Orden: {metrics.averageServiceTime.toFixed(0)} min</p>
+          <p className="text-lg text-texto">Lote: {metrics.averageBatchTime.toFixed(0)} min</p>
         </Card>
       </div>
 
       <Card className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-display font-bold text-chocolate-oscuro">Análisis de productos</h3>
+          <h3 className="text-lg font-display font-bold text-texto">Análisis de productos</h3>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-tierra-clara">Ordenar por:</span>
+            <span className="text-sm text-texto-claro">Ordenar por:</span>
             <select
               value={productSortBy}
               onChange={e => setProductSortBy(e.target.value)}
-              className="p-1 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none"
+              className="p-1 border-b-2 border-borde bg-transparent text-texto text-sm focus:border-acento focus:outline-none"
             >
               <option value="quantity">Cantidad</option>
               <option value="total">Monto</option>
@@ -291,26 +291,26 @@ const AdminReports = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h4 className="font-medium text-verde-nopal mb-2">Más vendidos</h4>
-            {topProducts.length === 0 ? <p className="text-tierra-clara text-sm">No hay datos</p> :
+            <h4 className="font-medium text-texto-exito mb-2">Más vendidos</h4>
+            {topProducts.length === 0 ? <p className="text-texto-claro text-sm">No hay datos</p> :
               <ul className="space-y-1">
                 {topProducts.map(p => (
-                  <li key={`top-${p.category}-${p.name}`} className="flex justify-between text-sm border-b border-barro-claro/20 pb-1">
-                    <span className="text-chocolate-oscuro">{p.name} <span className="text-tierra-clara text-xs">({p.category})</span></span>
-                    <span className="text-chocolate-oscuro">{p.quantity} uds - ${p.total.toFixed(2)}</span>
+                  <li key={`top-${p.category}-${p.name}`} className="flex justify-between text-sm border-b border-borde-claro pb-1">
+                    <span className="text-texto">{p.name} <span className="text-texto-claro text-xs">({p.category})</span></span>
+                    <span className="text-texto">{p.quantity} uds - ${p.total.toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
             }
           </div>
           <div>
-            <h4 className="font-medium text-chile-guajillo mb-2">Menos vendidos</h4>
-            {bottomProducts.length === 0 ? <p className="text-tierra-clara text-sm">No hay datos</p> :
+            <h4 className="font-medium text-acento mb-2">Menos vendidos</h4>
+            {bottomProducts.length === 0 ? <p className="text-texto-claro text-sm">No hay datos</p> :
               <ul className="space-y-1">
                 {bottomProducts.map(p => (
-                  <li key={`bottom-${p.category}-${p.name}`} className="flex justify-between text-sm border-b border-barro-claro/20 pb-1">
-                    <span className="text-chocolate-oscuro">{p.name} <span className="text-tierra-clara text-xs">({p.category})</span></span>
-                    <span className="text-chocolate-oscuro">{p.quantity} uds - ${p.total.toFixed(2)}</span>
+                  <li key={`bottom-${p.category}-${p.name}`} className="flex justify-between text-sm border-b border-borde-claro pb-1">
+                    <span className="text-texto">{p.name} <span className="text-texto-claro text-xs">({p.category})</span></span>
+                    <span className="text-texto">{p.quantity} uds - ${p.total.toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
@@ -321,16 +321,16 @@ const AdminReports = () => {
 
       <Card>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-display font-bold text-chocolate-oscuro">Órdenes del período</h3>
-          <button onClick={() => setShowOrdersTable(!showOrdersTable)} className="text-chile-guajillo hover:text-red-800 font-medium text-sm transition">
+          <h3 className="text-lg font-display font-bold text-texto">Órdenes del período</h3>
+          <button onClick={() => setShowOrdersTable(!showOrdersTable)} className="text-acento hover:text-acento-hover font-medium text-sm transition">
             {showOrdersTable ? 'Ocultar' : 'Mostrar'} detalles
           </button>
         </div>
         {showOrdersTable && (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-barro-claro/30">
+            <table className="min-w-full divide-y divide-borde-claro">
               <thead>
-                <tr className="text-chocolate-oscuro">
+                <tr className="text-texto">
                   <th className="px-4 py-2 text-left">Cliente</th>
                   <th className="px-4 py-2 text-left">Mesa</th>
                   <th className="px-4 py-2 text-left">Creación</th>
@@ -341,14 +341,14 @@ const AdminReports = () => {
               </thead>
               <tbody>
                 {allOrders.map(o => (
-                  <tr key={o.id} className="border-b border-barro-claro/20 text-chocolate-oscuro">
+                  <tr key={o.id} className="border-b border-borde-claro text-texto">
                     <td className="px-4 py-2">{o.clientName}</td>
                     <td className="px-4 py-2">{o.tableNumber}</td>
                     <td className="px-4 py-2">{o.createdAt?.toDate().toLocaleString()}</td>
                     <td className="px-4 py-2">{o.completedAt?.toDate()?.toLocaleString() || '-'}</td>
                     <td className="px-4 py-2">${o.realTotal}</td>
                     <td className="px-4 py-2">
-                      <button onClick={() => generateOrderPDF(o, menuCategories, 'final')} className="text-chile-guajillo hover:text-red-800 font-medium text-sm transition" >
+                      <button onClick={() => generateOrderPDF(o, menuCategories, 'final')} className="text-acento hover:text-acento-hover font-medium text-sm transition">
                         Descargar cuenta
                       </button>
                     </td>

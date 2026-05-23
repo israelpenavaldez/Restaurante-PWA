@@ -1,7 +1,7 @@
 const typeStyles = {
-  success: 'bg-verde-nopal text-white',
-  error: 'bg-chile-guajillo text-white',
-  warning: 'bg-maiz-dorado text-chocolate-oscuro',
+  success: 'bg-aviso-exito-fondo text-aviso-exito-texto',
+  error: 'bg-aviso-error-fondo text-aviso-error-texto',
+  warning: 'bg-aviso-alerta-fondo text-aviso-alerta-texto',
 };
 
 export default function Toast({ message, type = 'success' }) {

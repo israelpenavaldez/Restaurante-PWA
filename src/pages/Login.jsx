@@ -78,12 +78,12 @@ const LoginView = () => {
 
   if (showPasswordSetup) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-crema">
+      <div className="flex justify-center items-center min-h-screen bg-fondo">
         <Card className="w-full max-w-md">
-          <h2 className="text-2xl font-display font-bold text-center text-chocolate-oscuro mb-4">
+          <h2 className="text-2xl font-display font-bold text-center text-texto mb-4">
             Completa tu registro
           </h2>
-          <p className="text-tierra-clara mb-4 text-center">
+          <p className="text-texto-claro mb-4 text-center">
             Elige una contraseña para acceder también con email:
           </p>
           <form onSubmit={handleSetGooglePassword}>
@@ -92,7 +92,7 @@ const LoginView = () => {
               placeholder="Nueva contraseña"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full p-2 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none mb-4 transition-colors"
+              className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
               required
             />
             <Button type="submit" disabled={loading} className="w-full">
@@ -100,7 +100,7 @@ const LoginView = () => {
             </Button>
           </form>
           {error && (
-            <div className="bg-chile-guajillo/10 text-chile-guajillo p-2 rounded mt-4 text-sm">
+            <div className="bg-acento/10 text-acento p-2 rounded mt-4 text-sm">
               {error}
             </div>
           )}
@@ -110,14 +110,14 @@ const LoginView = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-crema">
+    <div className="flex justify-center items-center min-h-screen bg-fondo">
       <Card className="w-full max-w-md">
-        <h2 className="text-3xl font-display font-bold text-center text-chocolate-oscuro mb-6">
+        <h2 className="text-3xl font-display font-bold text-center text-texto mb-6">
           {isLogin ? 'Iniciar Sesión' : 'Registro'}
         </h2>
 
         {error && (
-          <div className="bg-chile-guajillo/10 text-chile-guajillo p-2 rounded mb-4 text-sm">
+          <div className="bg-acento/10 text-acento p-2 rounded mb-4 text-sm">
             {error}
           </div>
         )}
@@ -128,7 +128,7 @@ const LoginView = () => {
             placeholder="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none mb-4 transition-colors"
+            className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
             required
           />
           <input
@@ -136,7 +136,7 @@ const LoginView = () => {
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none mb-4 transition-colors"
+            className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
             required={isLogin}
           />
           {!isLogin && (
@@ -145,7 +145,7 @@ const LoginView = () => {
               placeholder="Nombre completo"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full p-2 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none mb-4 transition-colors"
+              className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
               required
             />
           )}
@@ -166,7 +166,7 @@ const LoginView = () => {
 
         <button
           onClick={() => setIsLogin(!isLogin)}
-          className="w-full text-tierra-clara hover:text-chile-guajillo text-center text-sm transition-colors"
+          className="w-full text-texto-claro hover:text-acento text-center text-sm transition-colors"
         >
           {isLogin
             ? '¿No tienes cuenta? Regístrate'

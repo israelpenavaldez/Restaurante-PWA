@@ -132,16 +132,16 @@ const ChefDashboard = () => {
     });
   };
 
-  if (loading) return <div className="text-center mt-10 text-tierra-clara font-body">Cargando órdenes...</div>;
+  if (loading) return <div className="text-center mt-10 text-texto-claro font-body">Cargando órdenes...</div>;
 
   return (
-    <div className="min-h-screen bg-crema">
+    <div className="min-h-screen bg-fondo">
       {/* Header */}
-      <div className="bg-hueso shadow-md border-b border-barro-claro/30">
+      <div className="bg-tarjeta shadow-md border-b border-borde-claro">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-display font-bold text-chocolate-oscuro">Panel de Cocina</h1>
+          <h1 className="text-2xl font-display font-bold text-texto">Panel de Cocina</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-chocolate-oscuro font-medium">{userData?.displayName || userData?.email} (Cocinero)</span>
+            <span className="text-texto font-medium">{userData?.displayName || userData?.email} (Cocinero)</span>
             <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
               Cerrar sesión
             </Button>
@@ -150,15 +150,15 @@ const ChefDashboard = () => {
       </div>
 
       {/* Pestañas */}
-      <div className="border-b border-barro-claro/30 bg-hueso">
+      <div className="border-b border-borde-claro bg-tarjeta">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveTab('pending')}
               className={`py-3 px-1 border-b-2 font-medium text-sm transition ${
                 activeTab === 'pending'
-                  ? 'border-chile-guajillo text-chile-guajillo'
-                  : 'border-transparent text-tierra-clara hover:text-chocolate-oscuro hover:border-barro-claro'
+                  ? 'border-acento text-acento'
+                  : 'border-transparent text-texto-claro hover:text-texto hover:border-borde'
               }`}
             >
               Pendiente ({pendingBatches.length})
@@ -167,8 +167,8 @@ const ChefDashboard = () => {
               onClick={() => setActiveTab('preparing')}
               className={`py-3 px-1 border-b-2 font-medium text-sm transition ${
                 activeTab === 'preparing'
-                  ? 'border-chile-guajillo text-chile-guajillo'
-                  : 'border-transparent text-tierra-clara hover:text-chocolate-oscuro hover:border-barro-claro'
+                  ? 'border-acento text-acento'
+                  : 'border-transparent text-texto-claro hover:text-texto hover:border-borde'
               }`}
             >
               En preparación ({preparingBatches.length})
@@ -203,7 +203,7 @@ const ChefDashboard = () => {
             ))}
             {preparingBatches.length === 0 && (
               <Card className="text-center p-8">
-                <p className="text-tierra-clara">No hay lotes en preparación.</p>
+                <p className="text-texto-claro">No hay lotes en preparación.</p>
               </Card>
             )}
           </div>

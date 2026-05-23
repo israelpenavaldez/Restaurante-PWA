@@ -15,9 +15,9 @@ const SignOut = () => {
   }, [logout, navigate]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-crema">
+    <div className="flex justify-center items-center min-h-screen bg-fondo">
       <div className="text-center">
-        <p className="text-xl text-tierra-clara font-body animate-pulse">
+        <p className="text-xl text-texto-claro font-body animate-pulse">
           Cerrando sesión...
         </p>
       </div>

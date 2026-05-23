@@ -3,10 +3,10 @@
  * @param {string} status - 'pending' | 'ready' | 'delivered' | 'cancelled'
  */
 const statusStyles = {
-  pending: 'bg-maiz-dorado/20 text-yellow-800',
-  ready: 'bg-verde-nopal/20 text-green-800',
-  delivered: 'bg-gray-200 text-gray-700',
-  cancelled: 'bg-red-100 text-red-800',
+  pending: 'bg-insignia-pendiente-fondo text-insignia-pendiente-texto',
+  ready: 'bg-insignia-listo-fondo text-insignia-listo-texto',
+  delivered: 'bg-insignia-entregado-fondo text-insignia-entregado-texto',
+  cancelled: 'bg-insignia-cancelado-fondo text-insignia-cancelado-texto',
 };
 
 const labels = {

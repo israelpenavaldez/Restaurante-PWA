@@ -62,64 +62,64 @@ const AdminTables = () => {
     setEditDesc(t.description || '');
   };
 
-  if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando mesas...</div>;
+  if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando mesas...</div>;
 
   return (
     <div>
-      <h2 className="text-2xl font-display font-bold text-chocolate-oscuro mb-6">Gestión de mesas</h2>
+      <h2 className="text-2xl font-display font-bold text-texto mb-6">Gestión de mesas</h2>
 
       <Card className="mb-6">
-        <h3 className="text-lg font-display font-bold text-chocolate-oscuro mb-4">Agregar nueva mesa</h3>
+        <h3 className="text-lg font-display font-bold text-texto mb-4">Agregar nueva mesa</h3>
         <form onSubmit={addTable} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <input type="text" placeholder="Identificador (ej: 1, Terraza, VIP)" value={newNumber}
             onChange={e => setNewNumber(e.target.value)}
-            className="p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition" />
+            className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none transition" />
           <input type="text" placeholder="Descripción" value={newDesc}
             onChange={e => setNewDesc(e.target.value)}
-            className="p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition" />
+            className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none transition" />
         </form>
         <Button variant="success" type="submit" onClick={addTable}>Agregar mesa</Button>
       </Card>
 
       <Card className="overflow-hidden !p-0">
-        <table className="min-w-full divide-y divide-barro-claro/30">
-          <thead className="bg-barro-claro/20">
+        <table className="min-w-full divide-y divide-borde-claro">
+          <thead className="bg-tarjeta-alt/20">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase">Identificador</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase">Descripción</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase">Estado</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase">Activo</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tierra-clara uppercase">Acciones</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Identificador</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Descripción</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Estado</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Activo</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-texto-claro uppercase">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-barro-claro/20 text-chocolate-oscuro">
+          <tbody className="divide-y divide-borde-claro text-texto">
             {tables.map(t => (
               <tr key={t.id}>
-                <td className="px-6 py-4">{editId === t.id ? <input value={editNumber} onChange={e => setEditNumber(e.target.value)} className="p-1 border-b-2 border-barro-claro bg-transparent focus:border-chile-guajillo focus:outline-none" /> : t.number}</td>
-                <td className="px-6 py-4">{editId === t.id ? <input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="p-1 border-b-2 border-barro-claro bg-transparent focus:border-chile-guajillo focus:outline-none w-full" /> : t.description || '-'}</td>
+                <td className="px-6 py-4">{editId === t.id ? <input value={editNumber} onChange={e => setEditNumber(e.target.value)} className="p-1 border-b-2 border-borde bg-transparent focus:border-acento focus:outline-none" /> : t.number}</td>
+                <td className="px-6 py-4">{editId === t.id ? <input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="p-1 border-b-2 border-borde bg-transparent focus:border-acento focus:outline-none w-full" /> : t.description || '-'}</td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'occupied' ? 'bg-chile-guajillo/10 text-red-800' : 'bg-verde-nopal/20 text-green-800'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'occupied' ? 'bg-insignia-cancelado-fondo text-insignia-cancelado-texto' : 'bg-insignia-listo-fondo text-insignia-listo-texto'}`}>
                     {t.status === 'occupied' ? 'Ocupada' : 'Libre'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.active ? 'bg-verde-nopal/20 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.active ? 'bg-insignia-listo-fondo text-insignia-listo-texto' : 'bg-fondo-inactivo text-texto-claro'}`}>
                     {t.active ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
                 <td className="px-6 py-4 space-x-2">
                   {editId === t.id ? (
                     <>
-                      <button onClick={() => updateTable(t.id)} className="text-chile-guajillo font-medium text-sm">Guardar</button>
-                      <button onClick={() => setEditId(null)} className="text-tierra-clara text-sm">Cancelar</button>
+                      <button onClick={() => updateTable(t.id)} className="text-acento font-medium text-sm">Guardar</button>
+                      <button onClick={() => setEditId(null)} className="text-texto-claro text-sm">Cancelar</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => startEdit(t)} className="text-chile-guajillo font-medium text-sm">Editar</button>
-                      <button onClick={() => toggleActive(t.id, t.active)} className={`text-sm font-medium ${t.active ? 'text-maiz-dorado' : 'text-verde-nopal'}`}>
+                      <button onClick={() => startEdit(t)} className="text-acento font-medium text-sm">Editar</button>
+                      <button onClick={() => toggleActive(t.id, t.active)} className={`text-sm font-medium ${t.active ? 'text-texto-aviso' : 'text-texto-exito'}`}>
                         {t.active ? 'Desactivar' : 'Activar'}
                       </button>
-                      <button onClick={() => deleteTable(t.id)} className="text-chile-guajillo font-medium text-sm">Eliminar</button>
+                      <button onClick={() => deleteTable(t.id)} className="text-acento font-medium text-sm">Eliminar</button>
                     </>
                   )}
                 </td>
@@ -128,7 +128,7 @@ const AdminTables = () => {
           </tbody>
         </table>
       </Card>
-      {tables.length === 0 && <p className="text-tierra-clara text-center mt-8">No hay mesas</p>}
+      {tables.length === 0 && <p className="text-texto-claro text-center mt-8">No hay mesas</p>}
     </div>
   );
 };

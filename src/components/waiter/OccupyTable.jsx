@@ -12,7 +12,6 @@ import { groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
-
 const OccupyTable = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
@@ -171,15 +170,15 @@ const OccupyTable = () => {
   const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
 
   if (loadingMenu || clients.length === 0 || realTableNumber === null) {
-    return <div className="text-center mt-10 text-tierra-clara">Cargando...</div>;
+    return <div className="text-center mt-10 text-texto-claro">Cargando...</div>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-crema min-h-screen">
-      <button onClick={() => navigate('/dashboard')} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+    <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
+      <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
-      <h2 className="text-3xl font-display font-bold text-chocolate-oscuro mb-6">Ocupar Mesa {realTableNumber}</h2>
+      <h2 className="text-3xl font-display font-bold text-texto mb-6">Ocupar Mesa {realTableNumber}</h2>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {clients.map(client => (
@@ -188,22 +187,25 @@ const OccupyTable = () => {
               onClick={() => setActiveClientId(client.id)}
               className={`px-4 py-2 rounded-full font-medium transition ${
                 activeClientId === client.id
-                  ? 'bg-chile-guajillo text-white shadow-md'
-                  : 'bg-barro-claro/30 text-chocolate-oscuro hover:bg-barro-claro/50'
+                  ? 'bg-acento text-texto-inverso shadow-md'
+                  : 'bg-tarjeta-alt/30 text-texto hover:bg-tarjeta-alt/50'
               }`}
             >
               {client.name || 'Cliente sin nombre'}
             </button>
             <button
               onClick={() => handleRemoveClient(client.id)}
-              className="absolute -top-2 -right-2 bg-chile-guajillo text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow"
+              className="absolute -top-2 -right-2 bg-acento text-texto-inverso rounded-full w-5 h-5 flex items-center justify-center text-xs shadow"
               title="Eliminar cliente"
             >
               ×
             </button>
           </div>
         ))}
-        <button onClick={handleAddClient} className="bg-verde-nopal text-white px-4 py-2 rounded-full font-semibold hover:bg-green-700 transition">
+        <button
+          onClick={handleAddClient}
+          className="bg-boton-exito hover:bg-boton-exito-hover text-boton-exito-texto px-4 py-2 rounded-full font-semibold transition"
+        >
           + Nueva orden
         </button>
       </div>
@@ -214,19 +216,19 @@ const OccupyTable = () => {
           placeholder="Nombre del cliente (opcional solo para el primer cliente)"
           value={activeClient?.name || ''}
           onChange={(e) => updateClientName(activeClient.id, e.target.value)}
-          className="w-full p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition"
+          className="w-full p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none transition"
         />
         {clients.length > 1 && (
-          <p className="text-xs text-chile-guajillo mt-1">* Los clientes adicionales deben tener nombre</p>
+          <p className="text-xs text-acento mt-1">* Los clientes adicionales deben tener nombre</p>
         )}
       </div>
 
       <div className="mb-4">
-        <label className="block font-medium text-chocolate-oscuro mb-1">Categoría:</label>
+        <label className="block font-medium text-texto mb-1">Categoría:</label>
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition"
+          className="w-full p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition"
         >
           {categories.map(cat => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -239,29 +241,29 @@ const OccupyTable = () => {
           <Card key={product.id} className="flex flex-col items-center text-center">
             <div className="flex justify-center mb-3">
               {product.imageUrl ? (
-                <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-barro-claro" />
+                <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-borde" />
               ) : currentCategory?.imageUrl ? (
-                <img src={currentCategory.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-barro-claro" />
+                <img src={currentCategory.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-borde" />
               ) : (
-                <div className="w-20 h-20 bg-barro-claro/30 rounded-full flex items-center justify-center text-3xl">X</div>
+                <div className="w-20 h-20 bg-tarjeta-alt/30 rounded-full flex items-center justify-center text-3xl">🍽️</div>
               )}
             </div>
-            <h4 className="font-display font-bold text-chocolate-oscuro">{product.name}</h4>
-            <p className="text-maiz-dorado font-bold text-lg mb-2">${product.price}</p>
+            <h4 className="font-display font-bold text-texto">{product.name}</h4>
+            <p className="text-texto-aviso font-bold text-lg mb-2">${product.price}</p>
             <div className="mt-auto space-y-2 w-full">
               <input
                 type="number"
                 min="1"
                 value={productQuantities[product.id] || 1}
                 onChange={(e) => setProductQuantities({ ...productQuantities, [product.id]: parseInt(e.target.value) || 1 })}
-                className="w-full p-1 border border-barro-claro rounded-md text-center text-chocolate-oscuro"
+                className="w-full p-1 border border-borde rounded-md text-center text-texto"
               />
               <input
                 type="text"
                 placeholder="Modificaciones"
                 value={productNotes[product.id] || ''}
                 onChange={(e) => setProductNotes({ ...productNotes, [product.id]: e.target.value })}
-                className="w-full p-1 border border-barro-claro rounded-md text-center text-chocolate-oscuro placeholder:text-tierra-clara text-sm"
+                className="w-full p-1 border border-borde rounded-md text-center text-texto placeholder:text-texto-claro text-sm"
               />
               <Button
                 variant="primary"
@@ -275,20 +277,19 @@ const OccupyTable = () => {
         ))}
       </div>
 
-      {/* Resumen del cliente activo */}
       <Card className="mb-6">
-        <h3 className="font-display font-bold text-xl text-chocolate-oscuro mb-3"> Resumen de {activeClient?.name || 'cliente'} </h3>
+        <h3 className="font-display font-bold text-xl text-texto mb-3">Resumen de {activeClient?.name || 'cliente'}</h3>
         {activeClient?.orders.length === 0 ? (
-          <p className="text-tierra-clara">No hay productos agregados</p>
+          <p className="text-texto-claro">No hay productos agregados</p>
         ) : (
           <ul className="space-y-2">
             {groupItemsForDisplay(activeClient.orders).map(group => (
-              <li key={group.id} className="flex justify-between items-center border-b border-barro-claro/30 pb-2">
-                <span className="text-chocolate-oscuro">
-                  {group.name} x{group.quantity} - <span className="text-maiz-dorado font-bold">${group.price * group.quantity}</span>
+              <li key={group.ids[0]} className="flex justify-between items-center border-b border-borde-claro pb-2">
+                <span className="text-texto">
+                  {group.name} x{group.quantity} - <span className="text-texto-aviso font-bold">${group.price * group.quantity}</span>
                 </span>
-                {group.notes && <span className="text-tierra-clara text-sm ml-2">({group.notes})</span>}
-                <button onClick={() => removeOrder(activeClient.id, group.id)} className="text-chile-guajillo hover:text-red-800 text-sm font-medium">
+                {group.notes && <span className="text-texto-claro text-sm ml-2">({group.notes})</span>}
+                <button onClick={() => removeOrders(activeClient.id, group.ids)} className="text-acento hover:text-acento-hover text-sm font-medium">
                   Eliminar
                 </button>
               </li>

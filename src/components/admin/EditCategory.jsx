@@ -142,7 +142,6 @@ const EditCategory = () => {
     if (!respuesta) return;
     setVariants(variants.filter(v => v.id !== id));
     if (activeVariant?.id === id) setActiveVariant(null);
-    // Guardar automáticamente al eliminar
     try {
       const updatedVariants = variants.filter(v => v.id !== id);
       await updateDoc(doc(db, 'menuCategories', categoryId), { items: updatedVariants });
@@ -169,7 +168,6 @@ const EditCategory = () => {
     }
   };
 
-  // Guardar el toggle de categoría activa inmediatamente
   const toggleCategoryActive = async () => {
     setIsActive(!isActive);
     try {
@@ -178,47 +176,45 @@ const EditCategory = () => {
     } catch (error) {
       console.error(error);
       notify('Error al cambiar estado', 'error');
-      setIsActive(!isActive); // revertir
+      setIsActive(!isActive);
     }
   };
 
-  if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando...</div>;
+  if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando...</div>;
 
-  // Bloquear edición completa si el servicio está abierto y no es nueva
   const isEditingBlocked = isServiceOpen && categoryId !== 'new';
 
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-crema min-h-screen">
-      <button onClick={() => navigate('/dashboard', { state: { activeTab: 'menu' } })} className="text-chile-guajillo hover:text-red-800 font-medium mb-4 inline-flex items-center gap-1">
+    <div className="max-w-4xl mx-auto p-4 bg-fondo min-h-screen">
+      <button onClick={() => navigate('/dashboard', { state: { activeTab: 'menu' } })} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver al menú
       </button>
 
       <Card>
-        <h2 className="text-2xl font-display font-bold text-chocolate-oscuro mb-6">
+        <h2 className="text-2xl font-display font-bold text-texto mb-6">
           {categoryId === 'new' ? 'Nueva categoría' : `Editar ${name}`}
         </h2>
 
         {isEditingBlocked && (
-          <div className="bg-chile-guajillo/10 text-chile-guajillo rounded-xl p-4 mb-6">
+          <div className="bg-acento/10 text-acento rounded-xl p-4 mb-6">
             <p className="font-medium">Servicio abierto</p>
             <p className="text-sm">Solo puede activar/desactivar categorías y variantes. Las ediciones completas requieren cerrar el servicio.</p>
           </div>
         )}
 
-        {/* Imagen categoría */}
         <div className="mb-4 flex items-start space-x-4">
-          <div className="w-32 h-32 bg-barro-claro/30 rounded-xl overflow-hidden flex-shrink-0">
+          <div className="w-32 h-32 bg-tarjeta-alt/30 rounded-xl overflow-hidden flex-shrink-0">
             <img src={imageUrl || 'https://via.placeholder.com/128?text=Sin+imagen'} alt={name || 'Categoría'} className="w-full h-full object-cover" />
           </div>
           <div className="space-y-2">
             {!isEditingBlocked && (
               <>
-                <label className="bg-chile-guajillo text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer inline-block hover:bg-red-700 transition">
+                <label className="bg-acento text-texto-inverso px-4 py-2 rounded-xl text-sm font-medium cursor-pointer inline-block hover:bg-acento-hover transition">
                   {uploading ? 'Subiendo...' : 'Subir imagen'}
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
                 </label>
                 {imageUrl && (
-                  <button onClick={() => setImageUrl('')} className="bg-tierra-clara text-white px-3 py-1 rounded-xl text-sm font-medium hover:bg-brown-700 transition block">
+                  <button onClick={() => setImageUrl('')} className="bg-boton-eliminar text-texto-inverso px-3 py-1 rounded-xl text-sm font-medium hover:bg-opacity-80 transition block">
                     Eliminar imagen
                   </button>
                 )}
@@ -227,26 +223,25 @@ const EditCategory = () => {
           </div>
         </div>
 
-        {/* Campos generales */}
         <div className="space-y-4 mb-6">
           <div>
-            <label className="block font-medium text-chocolate-oscuro mb-1">Nombre de categoría *</label>
+            <label className="block font-medium text-texto mb-1">Nombre de categoría *</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={isEditingBlocked}
-              className="w-full p-2 border-b-2 border-barro-claro bg-white/80 rounded-t-md text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
           <div>
-            <label className="block font-medium text-chocolate-oscuro mb-1">Descripción</label>
+            <label className="block font-medium text-texto mb-1">Descripción</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows="3"
               disabled={isEditingBlocked}
-              className="w-full p-2 border border-barro-claro rounded-lg bg-white/80 text-chocolate-oscuro placeholder:text-tierra-clara focus:border-chile-guajillo focus:outline-none transition resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full p-2 border border-borde rounded-lg bg-white/80 text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none transition resize-none disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -254,38 +249,36 @@ const EditCategory = () => {
               type="checkbox"
               checked={isActive}
               onChange={categoryId !== 'new' ? toggleCategoryActive : (e) => setIsActive(e.target.checked)}
-              className="rounded border-barro-claro text-chile-guajillo focus:ring-chile-guajillo"
+              className="rounded border-borde text-acento focus:ring-acento"
             />
-            <label className="text-chocolate-oscuro">Categoría activa</label>
+            <label className="text-texto">Categoría activa</label>
           </div>
         </div>
 
-        {/* Gestión de variantes */}
-        <div className="border-t border-barro-claro/30 pt-6">
+        <div className="border-t border-borde-claro pt-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-display font-bold text-chocolate-oscuro">Variantes</h3>
+            <h3 className="text-xl font-display font-bold text-texto">Variantes</h3>
             <Button variant="success" onClick={addVariant} disabled={isServiceOpen} className="text-sm py-1 px-3">
               + Agregar variante
             </Button>
           </div>
 
-          {/* Formulario de variante activa */}
           {activeVariant && (
-            <Card className="mb-4 bg-barro-claro/10">
-              <h4 className="font-display font-bold text-chocolate-oscuro mb-3">
+            <Card className="mb-4 bg-tarjeta-alt/10">
+              <h4 className="font-display font-bold text-texto mb-3">
                 {isServiceOpen ? 'Vista rápida (servicio abierto)' : 'Editando variante'}
               </h4>
 
               {isServiceOpen ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-chocolate-oscuro">{activeVariant.name}</p>
-                    <p className="text-sm text-tierra-clara">${activeVariant.price}</p>
+                    <p className="font-medium text-texto">{activeVariant.name}</p>
+                    <p className="text-sm text-texto-claro">${activeVariant.price}</p>
                   </div>
                   <button
                     onClick={() => toggleVariantActive(activeVariant.id)}
                     className={`px-3 py-1 rounded-xl text-sm font-medium transition ${
-                      activeVariant.active ? 'bg-maiz-dorado text-chocolate-oscuro hover:bg-yellow-600' : 'bg-verde-nopal text-white hover:bg-green-700'
+                      activeVariant.active ? 'bg-boton-aviso text-boton-aviso-texto hover:bg-boton-aviso-hover' : 'bg-boton-exito text-boton-exito-texto hover:bg-boton-exito-hover'
                     }`}
                   >
                     {activeVariant.active ? 'Desactivar' : 'Activar'}
@@ -294,16 +287,16 @@ const EditCategory = () => {
               ) : (
                 <>
                   <div className="mb-3 flex items-start space-x-4">
-                    <div className="w-20 h-20 bg-barro-claro/30 rounded-xl overflow-hidden flex-shrink-0">
+                    <div className="w-20 h-20 bg-tarjeta-alt/30 rounded-xl overflow-hidden flex-shrink-0">
                       <img src={activeVariant.imageUrl || 'https://via.placeholder.com/80?text=Sin+img'} alt={activeVariant.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="space-y-1">
-                      <label className="bg-chile-guajillo text-white px-3 py-1 rounded-lg text-xs font-medium cursor-pointer inline-block hover:bg-red-700 transition">
+                      <label className="bg-acento text-texto-inverso px-3 py-1 rounded-lg text-xs font-medium cursor-pointer inline-block hover:bg-acento-hover transition">
                         {uploadingVariant ? 'Subiendo...' : 'Subir imagen'}
                         <input type="file" accept="image/*" onChange={handleVariantImageUpload} className="hidden" disabled={uploadingVariant} />
                       </label>
                       {activeVariant.imageUrl && (
-                        <button onClick={() => setActiveVariant({ ...activeVariant, imageUrl: '' })} className="bg-tierra-clara text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-brown-700 transition block">
+                        <button onClick={() => setActiveVariant({ ...activeVariant, imageUrl: '' })} className="bg-boton-eliminar text-texto-inverso px-3 py-1 rounded-lg text-xs font-medium hover:bg-opacity-80 transition block">
                           Quitar imagen
                         </button>
                       )}
@@ -311,15 +304,15 @@ const EditCategory = () => {
                   </div>
                   <div className="space-y-2">
                     <input type="text" value={activeVariant.name} onChange={e => setActiveVariant({ ...activeVariant, name: e.target.value })}
-                      placeholder="Nombre de la variante" className="w-full p-2 border-b-2 border-barro-claro bg-white rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />
+                      placeholder="Nombre de la variante" className="w-full p-2 border-b-2 border-borde bg-white rounded-t-md text-texto focus:border-acento focus:outline-none transition" />
                     <input type="number" value={activeVariant.price} onChange={e => setActiveVariant({ ...activeVariant, price: parseFloat(e.target.value) })}
-                      placeholder="Precio" className="w-full p-2 border-b-2 border-barro-claro bg-white rounded-t-md text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition" />
+                      placeholder="Precio" className="w-full p-2 border-b-2 border-borde bg-white rounded-t-md text-texto focus:border-acento focus:outline-none transition" />
                     <textarea value={activeVariant.description || ''} onChange={e => setActiveVariant({ ...activeVariant, description: e.target.value })}
-                      placeholder="Descripción individual (opcional)" rows="2" className="w-full p-2 border border-barro-claro rounded-lg bg-white text-chocolate-oscuro focus:border-chile-guajillo focus:outline-none transition resize-none" />
+                      placeholder="Descripción individual (opcional)" rows="2" className="w-full p-2 border border-borde rounded-lg bg-white text-texto focus:border-acento focus:outline-none transition resize-none" />
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={activeVariant.active !== false} onChange={e => setActiveVariant({ ...activeVariant, active: e.target.checked })}
-                        className="rounded border-barro-claro text-chile-guajillo focus:ring-chile-guajillo" />
-                      <label className="text-chocolate-oscuro text-sm">Activo</label>
+                        className="rounded border-borde text-acento focus:ring-acento" />
+                      <label className="text-texto text-sm">Activo</label>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="primary" onClick={() => updateVariant(activeVariant)} className="text-sm py-1">Guardar variante</Button>
@@ -331,44 +324,42 @@ const EditCategory = () => {
             </Card>
           )}
 
-          {/* Lista de variantes */}
           <ul className="space-y-2">
             {variants.map(v => (
-              <li key={v.id} className="flex justify-between items-center border-b border-barro-claro/20 pb-3">
+              <li key={v.id} className="flex justify-between items-center border-b border-borde-claro pb-3">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-barro-claro/30 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="w-10 h-10 bg-tarjeta-alt/30 rounded-lg overflow-hidden flex-shrink-0">
                     {v.imageUrl ? <img src={v.imageUrl} alt={v.name} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">X</div>}
+                      : <div className="w-full h-full flex items-center justify-center text-texto-claro text-xs">🍽️</div>}
                   </div>
                   <div>
-                    <span className={v.active === false ? 'line-through text-gray-400' : 'text-chocolate-oscuro font-medium'}>
-                      {v.name} - <span className="text-maiz-dorado font-bold">${v.price}</span>
+                    <span className={v.active === false ? 'line-through text-texto-claro' : 'text-texto font-medium'}>
+                      {v.name} - <span className="text-texto-aviso font-bold">${v.price}</span>
                     </span>
-                    {v.description && <div className="text-xs text-tierra-clara">{v.description}</div>}
+                    {v.description && <div className="text-xs text-texto-claro">{v.description}</div>}
                   </div>
                 </div>
                 <div className="flex gap-2 text-sm">
                   {!isServiceOpen && (
-                    <button onClick={() => setActiveVariant(v)} className="text-chile-guajillo hover:text-red-800 font-medium">Editar</button>
+                    <button onClick={() => setActiveVariant(v)} className="text-acento hover:text-acento-hover font-medium">Editar</button>
                   )}
                   <button
                     onClick={() => toggleVariantActive(v.id)}
-                    className={`font-medium ${v.active ? 'text-maiz-dorado hover:text-yellow-700' : 'text-verde-nopal hover:text-green-700'}`}
+                    className={`font-medium ${v.active ? 'text-texto-aviso hover:text-texto-aviso-hover' : 'text-texto-exito hover:text-texto-exito-hover'}`}
                   >
                     {v.active ? 'Desactivar' : 'Activar'}
                   </button>
                   {!isServiceOpen && (
-                    <button onClick={() => deleteVariant(v.id)} className="text-chile-guajillo hover:text-red-800 font-medium">Eliminar</button>
+                    <button onClick={() => deleteVariant(v.id)} className="text-acento hover:text-acento-hover font-medium">Eliminar</button>
                   )}
                 </div>
               </li>
             ))}
           </ul>
-          {variants.length === 0 && <p className="text-tierra-clara text-sm mt-2">No hay variantes</p>}
+          {variants.length === 0 && <p className="text-texto-claro text-sm mt-2">No hay variantes</p>}
         </div>
 
-        {/* Botones finales */}
-        <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-barro-claro/30">
+        <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-borde-claro">
           <Button variant="secondary" onClick={() => navigate('/dashboard', { state: { activeTab: 'menu' } })}>Cancelar</Button>
           {!isServiceOpen && (
             <Button variant="primary" onClick={handleSave} disabled={saving}>

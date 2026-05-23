@@ -111,11 +111,11 @@ const AdminHome = () => {
     const respuesta = await confirm('¿Estás seguro de cambiar el estado del servicio?');
     if (!respuesta) return;
     setUpdatingService(true);
-    notify('Servicio actualizado', 'success');
     try {
       const newStatus = !metrics.isServiceOpen;
       await updateDoc(doc(db, 'config', 'settings'), { isServiceOpen: newStatus });
       setMetrics(prev => ({ ...prev, isServiceOpen: newStatus }));
+      notify('Servicio actualizado', 'success');
     } catch (error) {
       console.error(error);
       notify('No se pudo cambiar el estado del servicio', 'error');
@@ -124,50 +124,50 @@ const AdminHome = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10 text-tierra-clara">Cargando métricas...</div>;
+  if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando métricas...</div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-display font-bold text-chocolate-oscuro">Resumen del día</h2>
+        <h2 className="text-2xl font-display font-bold text-texto">Resumen del día</h2>
         <Button
           variant={metrics.isServiceOpen ? 'success' : 'primary'}
           onClick={toggleServiceStatus}
           disabled={updatingService}
         >
-          {metrics.isServiceOpen ? '🔓 Servicio abierto' : '🔒 Servicio cerrado'}
+          {metrics.isServiceOpen ? 'Servicio abierto' : 'Servicio cerrado'}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Ventas del día</h3>
-          <p className="text-3xl font-display font-bold text-chile-guajillo mt-2">${metrics.dailySales.toFixed(2)}</p>
+          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Ventas del día</h3>
+          <p className="text-3xl font-display font-bold text-acento mt-2">${metrics.dailySales.toFixed(2)}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Órdenes completadas</h3>
-          <p className="text-3xl font-display font-bold text-chocolate-oscuro mt-2">{metrics.ordersAttended}</p>
+          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Órdenes completadas</h3>
+          <p className="text-3xl font-display font-bold text-texto mt-2">{metrics.ordersAttended}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Ticket promedio</h3>
-          <p className="text-3xl font-display font-bold text-chocolate-oscuro mt-2">${metrics.averageTicket.toFixed(2)}</p>
+          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Ticket promedio</h3>
+          <p className="text-3xl font-display font-bold text-texto mt-2">${metrics.averageTicket.toFixed(2)}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-tierra-clara text-sm font-medium uppercase tracking-wide">Mesas ocupadas</h3>
-          <p className="text-3xl font-display font-bold text-chocolate-oscuro mt-2">{metrics.occupiedTables} / {metrics.totalTables}</p>
+          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Mesas ocupadas</h3>
+          <p className="text-3xl font-display font-bold text-texto mt-2">{metrics.occupiedTables} / {metrics.totalTables}</p>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-display font-bold text-chocolate-oscuro">5 productos más vendidos (hoy)</h3>
+            <h3 className="text-lg font-display font-bold text-texto">5 productos más vendidos (hoy)</h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-tierra-clara">Ordenar por:</span>
+              <span className="text-sm text-texto-claro">Ordenar por:</span>
               <select
                 value={productSortBy}
                 onChange={(e) => setProductSortBy(e.target.value)}
-                className="p-1 border-b-2 border-barro-claro bg-transparent text-chocolate-oscuro text-sm focus:border-chile-guajillo focus:outline-none"
+                className="p-1 border-b-2 border-borde bg-transparent text-texto text-sm focus:border-acento focus:outline-none"
               >
                 <option value="quantity">Cantidad</option>
                 <option value="total">Monto</option>
@@ -175,18 +175,18 @@ const AdminHome = () => {
             </div>
           </div>
           {metrics.topProducts.length === 0 ? (
-            <p className="text-tierra-clara">No hay ventas registradas hoy.</p>
+            <p className="text-texto-claro">No hay ventas registradas hoy.</p>
           ) : (
             <ul className="space-y-2">
               {metrics.topProducts.map((product, idx) => (
-                <li key={idx} className="flex justify-between items-center border-b border-barro-claro/20 pb-2">
+                <li key={idx} className="flex justify-between items-center border-b border-borde-claro pb-2">
                   <div>
-                    <span className="font-medium text-chocolate-oscuro">{product.name}</span>
-                    <span className="text-xs text-tierra-clara ml-1">({product.category})</span>
+                    <span className="font-medium text-texto">{product.name}</span>
+                    <span className="text-xs text-texto-claro ml-1">({product.category})</span>
                   </div>
                   <div className="text-right text-sm">
                     <span className="font-medium">{product.quantity} uds</span>
-                    <span className="text-tierra-clara ml-2">${product.total.toFixed(2)}</span>
+                    <span className="text-texto-claro ml-2">${product.total.toFixed(2)}</span>
                   </div>
                 </li>
               ))}
@@ -195,9 +195,9 @@ const AdminHome = () => {
         </Card>
 
         <Card>
-          <h3 className="text-lg font-display font-bold text-chocolate-oscuro mb-4">Resumen rápido</h3>
-          <p className="text-tierra-clara">Las métricas detalladas se encuentran en la pestaña <strong className="text-chocolate-oscuro">Reportes</strong>.</p>
-          <p className="text-tierra-clara mt-2">El análisis completo de productos está disponible en la exportación a PDF.</p>
+          <h3 className="text-lg font-display font-bold text-texto mb-4">Resumen rápido</h3>
+          <p className="text-texto-claro">Las métricas detalladas se encuentran en la pestaña <strong className="text-texto">Reportes</strong>.</p>
+          <p className="text-texto-claro mt-2">El análisis completo de productos está disponible en la exportación a PDF.</p>
         </Card>
       </div>
     </div>

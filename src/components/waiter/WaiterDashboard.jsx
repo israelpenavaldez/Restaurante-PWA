@@ -17,20 +17,18 @@ const WaiterDashboard = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 bg-crema min-h-screen">
-      {/* Barra superior con nombre y cierre */}
+    <div className="max-w-7xl mx-auto p-4 bg-fondo min-h-screen">
       <div className="flex justify-end items-center mb-8">
         <Card className="rounded-full px-5 py-2 flex items-center gap-3 shadow-sm">
-          <span className="font-semibold text-chocolate-oscuro">
+          <span className="font-semibold text-texto">
             {userData?.displayName || userData?.email}
           </span>
-          <span className="text-tierra-clara text-sm">(Mesero)</span>
+          <span className="text-texto-claro text-sm">(Mesero)</span>
           <Button variant="primary" onClick={handleLogout} className="text-sm px-3 py-1">
             Cerrar sesión
           </Button>
         </Card>
       </div>
-
       <TablesTab onOccupy={handleOccupy} onView={handleView} />
     </div>
   );
