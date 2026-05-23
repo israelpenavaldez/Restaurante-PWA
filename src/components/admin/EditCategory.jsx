@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -29,6 +29,11 @@ const EditCategory = () => {
 
   const { isServiceOpen } = useAuth();
   const { notify, confirm } = useNotification();
+
+  // Determina si hay variantes incompletas
+  const hasIncompleteVariants = useMemo(() => {
+    return variants.some(v => !v.name.trim() || v.price <= 0);
+  }, [variants]);
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -97,6 +102,17 @@ const EditCategory = () => {
       notify('El nombre de la categoría es obligatorio', 'warning');
       return;
     }
+
+    // Validación extra, aunque el botón esté deshabilitado
+    const incomplete = variants.find(v => !v.name.trim() || v.price <= 0);
+    if (incomplete) {
+      notify(`Corrige la variante "${incomplete.name || 'sin nombre'}" antes de guardar.`, 'warning');
+      return;
+    }
+
+    const ok = await confirm('¿Guardar los cambios de la categoría?');
+    if (!ok) return;
+
     setSaving(true);
     const data = {
       name: name.trim(),
@@ -128,7 +144,17 @@ const EditCategory = () => {
     setActiveVariant(v);
   };
 
-  const updateVariant = (updated) => {
+  const updateVariant = async (updated) => {
+    if (!updated.name.trim()) {
+      notify('El nombre de la variante es obligatorio', 'warning');
+      return;
+    }
+    if (updated.price <= 0) {
+      notify('El precio debe ser mayor a 0', 'warning');
+      return;
+    }
+    const ok = await confirm('¿Guardar los cambios de la variante?');
+    if (!ok) return;
     setVariants(variants.map(v => v.id === updated.id ? updated : v));
     setActiveVariant(null);
   };
@@ -152,6 +178,10 @@ const EditCategory = () => {
   };
 
   const toggleVariantActive = async (id) => {
+    const variant = variants.find(v => v.id === id);
+    const ok = await confirm(variant?.active ? '¿Desactivar esta variante?' : '¿Activar esta variante?');
+    if (!ok) return;
+
     const updatedVariants = variants.map(v =>
       v.id === id ? { ...v, active: !v.active } : v
     );
@@ -169,6 +199,8 @@ const EditCategory = () => {
   };
 
   const toggleCategoryActive = async () => {
+    const ok = await confirm(isActive ? '¿Desactivar esta categoría?' : '¿Activar esta categoría?');
+    if (!ok) return;
     setIsActive(!isActive);
     try {
       await updateDoc(doc(db, 'menuCategories', categoryId), { active: !isActive });
@@ -179,6 +211,23 @@ const EditCategory = () => {
       setIsActive(!isActive);
     }
   };
+
+  const handleRemoveImage = async () => {
+    if (!imageUrl) return;
+    const ok = await confirm('¿Quitar la imagen de la categoría?');
+    if (!ok) return;
+    setImageUrl('');
+  };
+
+  const handleRemoveVariantImage = async () => {
+    if (!activeVariant?.imageUrl) return;
+    const ok = await confirm('¿Quitar la imagen de la variante?');
+    if (!ok) return;
+    setActiveVariant(prev => ({ ...prev, imageUrl: '' }));
+  };
+
+  // Función para saber si una variante está incompleta
+  const isVariantIncomplete = (v) => !v.name.trim() || v.price <= 0;
 
   if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando...</div>;
 
@@ -214,7 +263,7 @@ const EditCategory = () => {
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
                 </label>
                 {imageUrl && (
-                  <button onClick={() => setImageUrl('')} className="bg-boton-eliminar text-texto-inverso px-3 py-1 rounded-xl text-sm font-medium hover:bg-opacity-80 transition block">
+                  <button onClick={handleRemoveImage} className="bg-boton-eliminar text-texto-inverso px-3 py-1 rounded-xl text-sm font-medium hover:bg-opacity-80 transition block">
                     Eliminar imagen
                   </button>
                 )}
@@ -296,7 +345,7 @@ const EditCategory = () => {
                         <input type="file" accept="image/*" onChange={handleVariantImageUpload} className="hidden" disabled={uploadingVariant} />
                       </label>
                       {activeVariant.imageUrl && (
-                        <button onClick={() => setActiveVariant({ ...activeVariant, imageUrl: '' })} className="bg-boton-eliminar text-texto-inverso px-3 py-1 rounded-lg text-xs font-medium hover:bg-opacity-80 transition block">
+                        <button onClick={handleRemoveVariantImage} className="bg-boton-eliminar text-texto-inverso px-3 py-1 rounded-lg text-xs font-medium hover:bg-opacity-80 transition block">
                           Quitar imagen
                         </button>
                       )}
@@ -325,36 +374,42 @@ const EditCategory = () => {
           )}
 
           <ul className="space-y-2">
-            {variants.map(v => (
-              <li key={v.id} className="flex justify-between items-center border-b border-borde-claro pb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-tarjeta-alt/30 rounded-lg overflow-hidden flex-shrink-0">
-                    {v.imageUrl ? <img src={v.imageUrl} alt={v.name} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-texto-claro text-xs">🍽️</div>}
+            {variants.map(v => {
+              const incomplete = isVariantIncomplete(v);
+              return (
+                <li key={v.id} className={`flex justify-between items-center border-b ${incomplete ? 'border-acento' : 'border-borde-claro'} pb-3`}>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-tarjeta-alt/30 rounded-lg overflow-hidden flex-shrink-0">
+                      {v.imageUrl ? <img src={v.imageUrl} alt={v.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-texto-claro text-xs">🍽️</div>}
+                    </div>
+                    <div>
+                      <span className={v.active === false ? 'line-through text-texto-claro' : 'text-texto font-medium'}>
+                        {v.name || <span className="text-acento italic">Sin nombre</span>} - <span className="text-texto-aviso font-bold">${v.price}</span>
+                      </span>
+                      {v.description && <div className="text-xs text-texto-claro">{v.description}</div>}
+                      {incomplete && (
+                        <p className="text-xs text-acento mt-1">⚠️ Debe tener un nombre y un precio mayor a 0</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className={v.active === false ? 'line-through text-texto-claro' : 'text-texto font-medium'}>
-                      {v.name} - <span className="text-texto-aviso font-bold">${v.price}</span>
-                    </span>
-                    {v.description && <div className="text-xs text-texto-claro">{v.description}</div>}
+                  <div className="flex gap-2 text-sm">
+                    {!isServiceOpen && (
+                      <button onClick={() => setActiveVariant(v)} className="text-acento hover:text-acento-hover font-medium">Editar</button>
+                    )}
+                    <button
+                      onClick={() => toggleVariantActive(v.id)}
+                      className={`font-medium ${v.active ? 'text-texto-aviso hover:text-texto-aviso-hover' : 'text-texto-exito hover:text-texto-exito-hover'}`}
+                    >
+                      {v.active ? 'Desactivar' : 'Activar'}
+                    </button>
+                    {!isServiceOpen && (
+                      <button onClick={() => deleteVariant(v.id)} className="text-acento hover:text-acento-hover font-medium">Eliminar</button>
+                    )}
                   </div>
-                </div>
-                <div className="flex gap-2 text-sm">
-                  {!isServiceOpen && (
-                    <button onClick={() => setActiveVariant(v)} className="text-acento hover:text-acento-hover font-medium">Editar</button>
-                  )}
-                  <button
-                    onClick={() => toggleVariantActive(v.id)}
-                    className={`font-medium ${v.active ? 'text-texto-aviso hover:text-texto-aviso-hover' : 'text-texto-exito hover:text-texto-exito-hover'}`}
-                  >
-                    {v.active ? 'Desactivar' : 'Activar'}
-                  </button>
-                  {!isServiceOpen && (
-                    <button onClick={() => deleteVariant(v.id)} className="text-acento hover:text-acento-hover font-medium">Eliminar</button>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
           {variants.length === 0 && <p className="text-texto-claro text-sm mt-2">No hay variantes</p>}
         </div>
@@ -362,7 +417,7 @@ const EditCategory = () => {
         <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-borde-claro">
           <Button variant="secondary" onClick={() => navigate('/dashboard', { state: { activeTab: 'menu' } })}>Cancelar</Button>
           {!isServiceOpen && (
-            <Button variant="primary" onClick={handleSave} disabled={saving}>
+            <Button variant="primary" onClick={handleSave} disabled={saving || hasIncompleteVariants || !name.trim()}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
           )}

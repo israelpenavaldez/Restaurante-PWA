@@ -14,7 +14,7 @@ const AdminMenu = () => {
   const [loading, setLoading] = useState(true);
 
   const { isServiceOpen } = useAuth();
-  const { notify } = useNotification();
+  const { notify, confirm } = useNotification();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -35,6 +35,10 @@ const AdminMenu = () => {
   const handleNew = () => navigate('/admin/edit-category/new');
 
   const toggleCategoryActive = async (categoryId, currentActive) => {
+    const ok = await confirm(
+      currentActive ? '¿Desactivar esta categoría?' : '¿Activar esta categoría?'
+    );
+    if (!ok) return;
     try {
       await updateDoc(doc(db, 'menuCategories', categoryId), { active: !currentActive });
       setCategories(prev =>
@@ -101,7 +105,7 @@ const AdminMenu = () => {
                   <button
                     onClick={() => toggleCategoryActive(category.id, category.active)}
                     className={`text-sm font-medium transition ${
-                      category.active ? 'text-texto-aviso' : 'text-texto-exito'
+                      category.active ? 'text-texto-aviso hover:text-texto-aviso-hover' : 'text-texto-exito hover:text-texto-exito-hover'
                     }`}
                   >
                     {category.active ? 'Desactivar' : 'Activar'}
