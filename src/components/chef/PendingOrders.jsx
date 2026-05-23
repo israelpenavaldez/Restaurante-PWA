@@ -1,10 +1,20 @@
 import React from 'react';
 import { formatElapsedTime, groupItemsForDisplay } from '../../utils/helpers';
+import { useNotification } from '../../context/NotificationContext';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
 const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
+  const { confirm } = useNotification();
+  const isOnline = useOnlineStatus();
+
+  const handlePrepare = async (orderId, batchId) => {
+    const ok = await confirm('¿Iniciar preparación de este lote?');
+    if (!ok) return;
+    onStartPreparing(orderId, batchId);
+  };
+
   if (batches.length === 0) {
     return (
       <Card className="text-center p-8 text-texto-claro">
@@ -12,8 +22,6 @@ const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
       </Card>
     );
   }
-  
-  const isOnline = useOnlineStatus();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -45,7 +53,7 @@ const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
             )}
             <Button
               variant="primary"
-              onClick={() => onStartPreparing(batch.orderId, batch.batch.batchId)}
+              onClick={() => handlePrepare(batch.orderId, batch.batch.batchId)}
               disabled={isLocked || !isOnline}
               className="w-full"
             >

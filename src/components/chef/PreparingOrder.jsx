@@ -1,28 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { formatElapsedTime } from '../../utils/helpers';
+import { useNotification } from '../../context/NotificationContext';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
 const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMarkItemReady, onUnmarkItemReady, isLocked }) => {
-  const [readyQuantities, setReadyQuantities] = useState({});
+  const { notify, confirm, prompt } = useNotification();
   const isOnline = useOnlineStatus();
 
-  useEffect(() => {
-    const initial = {};
-    batch.items.forEach(item => {
-      if (item.status === 'pending' && item.quantity > 1) {
-        initial[item.id] = 1;
+  const handleMarkReady = async (item) => {
+    if (item.quantity === 1) {
+      const ok = await confirm(`¿"${item.name}" esta listo?`);
+      if (!ok) return;
+      onMarkItemReady(orderId, batch.batchId, item.id, 1);
+    } else {
+      const input = await prompt(
+        `¿Cuántos "${item.name}" estan listos? (1-${item.quantity})`,
+        String(item.quantity) // valor por defecto: todas
+      );
+      if (!input) return;
+      const qty = parseInt(input);
+      if (isNaN(qty) || qty < 1 || qty > item.quantity) {
+        notify('Cantidad no válida', 'warning');
+        return;
       }
-    });
-    setReadyQuantities(initial);
-  }, [batch]);
+      onMarkItemReady(orderId, batch.batchId, item.id, qty);
+    }
+  };
 
-  const handleQuantityChange = (itemId, value) => {
-    const qty = parseInt(value) || 1;
-    const max = batch.items.find(i => i.id === itemId)?.quantity || 1;
-    setReadyQuantities(prev => ({ ...prev, [itemId]: Math.min(qty, max) }));
+  const handleUnmarkReady = async (item) => {
+    const ok = await confirm(`¿Desmarcar "${item.name}" como listo?`);
+    if (!ok) return;
+    onUnmarkItemReady(orderId, batch.batchId, item.id);
   };
 
   return (
@@ -92,7 +103,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                     <>
                       <Badge status="ready" />
                       <button
-                        onClick={() => onUnmarkItemReady(orderId, batch.batchId, item.id)}
+                        onClick={() => handleUnmarkReady(item)}
                         disabled={isLocked || !isOnline}
                         className="text-texto-advertencia hover:text-texto-advertencia-hover text-sm font-medium disabled:opacity-50 transition"
                         title="Desmarcar"
@@ -101,36 +112,14 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                       </button>
                     </>
                   ) : (
-                    item.quantity > 1 ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          min="1"
-                          max={item.quantity}
-                          value={readyQuantities[item.id] ?? item.quantity}
-                          onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                          className="w-16 p-1 border-b-2 border-borde bg-white/80 rounded-t-md text-center text-texto text-sm focus:border-acento focus:outline-none transition"
-                          disabled={isLocked || !isOnline}
-                        />
-                        <Button
-                          variant="success"
-                          onClick={() => onMarkItemReady(orderId, batch.batchId, item.id, readyQuantities[item.id] ?? item.quantity)}
-                          disabled={isLocked || !isOnline}
-                          className="text-sm py-1 px-3"
-                        >
-                          Marcar listo
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="success"
-                        onClick={() => onMarkItemReady(orderId, batch.batchId, item.id, 1)}
-                        disabled={isLocked || !isOnline}
-                        className="text-sm py-1 px-3"
-                      >
-                        Marcar listo
-                      </Button>
-                    )
+                    <Button
+                      variant="success"
+                      onClick={() => handleMarkReady(item)}
+                      disabled={isLocked || !isOnline}
+                      className="text-sm py-1 px-3"
+                    >
+                      Marcar listo
+                    </Button>
                   )}
                 </div>
               </div>
