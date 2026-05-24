@@ -1,14 +1,12 @@
-import React, { createContext, useState, useEffect, useContext, useRef  } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-  updatePassword
+  sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
 const AuthContext = createContext();
@@ -19,89 +17,89 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pendingGoogleUser, setPendingGoogleUser] = useState(null);
   const [isServiceOpen, setIsServiceOpen] = useState(true);
   const unsubscribeUserRef = useRef(null);
   const unsubscribeServiceRef = useRef(null);
 
   // Registro con email y password
   const register = async (email, password, displayName) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
-    await setDoc(doc(db, 'users', uid), {
-      email,
-      displayName,
-      role: 'pending',
-      enabled: false,
-      createdAt: new Date().toISOString(),
-    });
-    return userCredential.user;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+      await setDoc(doc(db, 'users', uid), {
+        email,
+        displayName,
+        role: 'pending',
+        enabled: false,
+        createdAt: new Date().toISOString(),
+      });
+      await signOut(auth);
+      return userCredential.user;
+    } catch (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('Este correo ya está registrado.');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('La contraseña debe tener al menos 6 caracteres.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Correo electrónico no válido.');
+      } else if (error.code === 'auth/password-does-not-meet-requirements') {
+        throw new Error('La contraseña debe contener al menos una mayúscula, una minúscula y un carácter especial.');
+      } else {
+        throw error;
+      }
+    }
   };
 
   // Login con email y password
   const login = async (email, password) => {
-    return await signInWithEmailAndPassword(auth, email, password);
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      if (error.code === 'auth/invalid-credential') {
+        throw new Error('Correo o contraseña incorrectos.');
+      } else if (error.code === 'auth/user-not-found') {
+        throw new Error('No existe una cuenta con este correo.');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Contraseña incorrecta.');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Correo electrónico no válido.');
+      } else if (error.code === 'auth/too-many-requests') {
+        throw new Error('Demasiados intentos. Intenta de nuevo más tarde.');
+      } else {
+        throw error;
+      }
+    }
   };
 
   // Cerrar sesión
   const logout = async () => {
-    // Limpiar suscripción antes de cerrar sesión
     if (unsubscribeUserRef.current) {
       unsubscribeUserRef.current();
       unsubscribeUserRef.current = null;
     }
     await signOut(auth);
-    sessionStorage.removeItem('cachedUserData'); // limpiar caché
+    sessionStorage.removeItem('cachedUserData');
   };
 
-  // Login con Google (maneja primer registro y vincula contraseña después)
-  const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const googleUser = result.user;
-    const userDoc = await getDoc(doc(db, 'users', googleUser.uid));
-    if (!userDoc.exists()) {
-      setPendingGoogleUser(googleUser);
-      return { isNew: true, user: googleUser };
-    }
-    return { isNew: false, user: googleUser };
+  // Recuperar contraseña
+  const resetPassword = async (email) => {
+    await sendPasswordResetEmail(auth, email);
   };
 
-  // Establecer contraseña para usuario que se registró con Google
-  const setGoogleUserPassword = async (password) => {
-    if (!pendingGoogleUser) throw new Error('No hay usuario pendiente');
-    await updatePassword(pendingGoogleUser, password);
-    await setDoc(doc(db, 'users', pendingGoogleUser.uid), {
-      email: pendingGoogleUser.email,
-      displayName: pendingGoogleUser.displayName || '',
-      role: 'pending',
-      enabled: false,
-      createdAt: new Date().toISOString(),
-    });
-    const user = pendingGoogleUser;
-    setPendingGoogleUser(null);
-    return user;
-  };
-
-  // Escuchar cambios en el usuario autenticado y en sus datos
+  // Escuchar cambios en el usuario autenticado
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      
-      // Limpiar la suscripción anterior si existe
       if (unsubscribeUserRef.current) {
         unsubscribeUserRef.current();
         unsubscribeUserRef.current = null;
       }
-
       if (currentUser) {
-        // Suscribirse a cambios en el documento del usuario
         const userDocRef = doc(db, 'users', currentUser.uid);
         const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             setUserData(data);
-            // Guardar en sessionStorage para recuperación offline
             try {
               sessionStorage.setItem('cachedUserData', JSON.stringify(data));
             } catch (e) { /* ignorar */ }
@@ -144,9 +142,7 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
-    loginWithGoogle,
-    setGoogleUserPassword,
-    pendingGoogleUser,
+    resetPassword,
     isServiceOpen,
   };
 
