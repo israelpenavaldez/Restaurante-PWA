@@ -201,14 +201,24 @@ const EditCategory = () => {
   const toggleCategoryActive = async () => {
     const ok = await confirm(isActive ? '¿Desactivar esta categoría?' : '¿Activar esta categoría?');
     if (!ok) return;
-    setIsActive(!isActive);
+
+    const newActive = !isActive;
+    // Siempre sincronizamos el estado de todas las variantes con el de la categoría
+    const updatedVariants = variants.map(v => ({ ...v, active: newActive }));
+
+    setIsActive(newActive);
+    setVariants(updatedVariants);
     try {
-      await updateDoc(doc(db, 'menuCategories', categoryId), { active: !isActive });
-      notify(!isActive ? 'Categoría activada' : 'Categoría desactivada', 'success');
+      await updateDoc(doc(db, 'menuCategories', categoryId), {
+        active: newActive,
+        items: updatedVariants,
+      });
+      notify(newActive ? 'Categoría activada (todas las variantes fueron activadas)' : 'Categoría desactivada (todas las variantes fueron desactivadas)', 'success');
     } catch (error) {
       console.error(error);
       notify('Error al cambiar estado', 'error');
-      setIsActive(!isActive);
+      setIsActive(!newActive); // revertir
+      setVariants(variants);
     }
   };
 

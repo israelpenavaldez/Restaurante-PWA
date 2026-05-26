@@ -56,16 +56,15 @@ const AddProductToOrder = () => {
   useEffect(() => {
     const fetchMenu = async () => {
       const cats = await getMenuCategories();
-      const activeCats = cats.filter(cat => cat.active !== false);
-      activeCats.sort((a, b) => a.name.localeCompare(b.name));
-      setCategories(activeCats);
-      if (activeCats.length > 0) setSelectedCategory(activeCats[0].id);
+      cats.sort((a, b) => a.name.localeCompare(b.name));
+      setCategories(cats);
+      if (cats.length > 0) setSelectedCategory(cats[0].id);
     };
     fetchMenu();
   }, []);
 
   const currentCategory = categories.find(c => c.id === selectedCategory);
-  const products = (currentCategory?.items || []).filter(item => item.active !== false);
+  const products = currentCategory?.items || [];
   const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
 
   const addToTemp = (product) => {
@@ -152,7 +151,13 @@ const AddProductToOrder = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
         {sortedProducts.map(product => (
-          <Card key={product.id} className="flex flex-col items-center text-center">
+          <Card
+            key={product.id}
+            className={`flex flex-col items-center text-center ${product.active === false ? 'opacity-50' : ''}`}
+          >
+            {product.active === false && (
+              <span className="text-xs text-acento font-medium mb-1">No disponible</span>
+            )}
             <div className="flex justify-center mb-3">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-borde" />
@@ -173,17 +178,27 @@ const AddProductToOrder = () => {
                 value={productQuantities[product.id] || 1}
                 onFocus={(e) => e.target.select()}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, ''); // solo números
+                  const val = e.target.value.replace(/\D/g, '');
                   if (val === '') return;
                   setProductQuantities(prev => ({ ...prev, [product.id]: parseInt(val) || 1 }));
                 }}
                 className="w-full p-1 border border-borde rounded-md text-center text-texto"
+                disabled={product.active === false || isLocked}
               />
-              <input type="text" placeholder="Modificaciones"
+              <input
+                type="text"
+                placeholder="Modificaciones"
                 value={productNotes[product.id] || ''}
                 onChange={(e) => setProductNotes({ ...productNotes, [product.id]: e.target.value })}
-                className="w-full p-1 border border-borde rounded-md text-center text-texto placeholder:text-texto-claro text-sm" />
-              <Button variant="primary" onClick={() => addToTemp(product)} disabled={isLocked} className="w-full py-1">
+                className="w-full p-1 border border-borde rounded-md text-center text-texto placeholder:text-texto-claro text-sm"
+                disabled={product.active === false || isLocked}
+              />
+              <Button
+                variant="primary"
+                onClick={() => addToTemp(product)}
+                className="w-full py-1"
+                disabled={product.active === false || isLocked}
+              >
                 Agregar
               </Button>
             </div>

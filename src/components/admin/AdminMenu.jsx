@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -40,13 +40,28 @@ const AdminMenu = () => {
     );
     if (!ok) return;
     try {
-      await updateDoc(doc(db, 'menuCategories', categoryId), { active: !currentActive });
+      const newActive = !currentActive;
+      // Siempre sincronizamos las variantes con el nuevo estado de la categoría
+      const catSnap = await getDoc(doc(db, 'menuCategories', categoryId));
+      if (catSnap.exists()) {
+        const items = catSnap.data().items || [];
+        const updatedItems = items.map(item => ({ ...item, active: newActive }));
+        await updateDoc(doc(db, 'menuCategories', categoryId), {
+          active: newActive,
+          items: updatedItems,
+        });
+      } else {
+        await updateDoc(doc(db, 'menuCategories', categoryId), { active: newActive });
+      }
+
       setCategories(prev =>
-        prev.map(cat =>
-          cat.id === categoryId ? { ...cat, active: !currentActive } : cat
-        )
+        prev.map(cat => {
+          if (cat.id !== categoryId) return cat;
+          const updatedItems = (cat.items || []).map(item => ({ ...item, active: newActive }));
+          return { ...cat, active: newActive, items: updatedItems };
+        })
       );
-      notify(!currentActive ? 'Categoría activada' : 'Categoría desactivada', 'success');
+      notify(newActive ? 'Categoría activada (todas las variantes fueron activadas)' : 'Categoría desactivada (todas las variantes fueron desactivadas)', 'success');
     } catch (error) {
       console.error(error);
       notify('No se pudo cambiar el estado', 'error');
