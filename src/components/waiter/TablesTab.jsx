@@ -52,9 +52,12 @@ const TablesTab = ({ onOccupy, onView }) => {
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
       {tables.map((table) => (
         <Card key={table.id} className="border-l-4 border-acento flex flex-col">
-          <h3 className="text-2xl font-display font-bold text-texto mb-2">
+          <h3 className="text-2xl font-display font-bold text-texto mb-1">
             Mesa {table.number}
           </h3>
+          {table.description && (
+            <p className="text-sm text-texto-claro mb-2">{table.description}</p>
+          )}
           <p className={`mb-4 font-semibold ${table.status === 'occupied' ? 'text-acento' : 'text-texto-exito'}`}>
             {table.status === 'occupied' ? 'Ocupada' : 'Libre'}
           </p>
