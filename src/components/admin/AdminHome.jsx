@@ -5,6 +5,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { getRealTotal, isOrderCompletelyCancelled } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import { useAuth } from '../../context/AuthContext'
 
 const AdminHome = () => {
   const [metrics, setMetrics] = useState({
@@ -20,6 +21,7 @@ const AdminHome = () => {
   const [updatingService, setUpdatingService] = useState(false);
   const [productSortBy, setProductSortBy] = useState('quantity');
   const { notify, confirm } = useNotification();
+  const { setIsServiceOpen } = useAuth();
 
   const fetchDailyMetrics = async () => {
     const startOfDay = new Date();
@@ -115,6 +117,7 @@ const AdminHome = () => {
       const newStatus = !metrics.isServiceOpen;
       await updateDoc(doc(db, 'config', 'settings'), { isServiceOpen: newStatus });
       setMetrics(prev => ({ ...prev, isServiceOpen: newStatus }));
+      setIsServiceOpen(newStatus);
       notify('Servicio actualizado', 'success');
     } catch (error) {
       console.error(error);
