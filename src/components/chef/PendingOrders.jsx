@@ -31,7 +31,7 @@ const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs text-texto-claro uppercase tracking-wide">Lote #{batch.batch.batchId}</span>
-                <h3 className="text-xl font-display font-bold text-texto mt-1">Mesa {batch.tableNumber}</h3>
+                <h3 className="text-xl font-display font-bold text-texto mt-1">Mesa: {batch.tableNumber}</h3>
                 <p className="text-sm text-texto-claro">Cliente: {batch.clientName}</p>
               </div>
               <span className="text-sm text-acento bg-acento/10 px-3 py-1 rounded-full font-medium">

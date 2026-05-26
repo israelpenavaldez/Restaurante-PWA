@@ -42,7 +42,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
       <div className="bg-tarjeta-alt/20 px-6 py-4 border-b border-borde-claro">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-display font-bold text-texto">Mesa {tableNumber}</h2>
+            <h2 className="text-2xl font-display font-bold text-texto">Mesa: {tableNumber}</h2>
             <p className="text-texto-claro">Cliente: {clientName}</p>
             <p className="text-sm text-texto-claro mt-1">
               Lote #{batch.batchId} · Pedido hace {formatElapsedTime(batch.timestamp)}

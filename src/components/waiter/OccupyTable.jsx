@@ -182,7 +182,7 @@ const OccupyTable = () => {
       <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
-      <h2 className="text-3xl font-display font-bold text-texto mb-6">Ocupar Mesa {realTableNumber}</h2>
+      <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa: {realTableNumber}</h2>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {clients.map(client => (

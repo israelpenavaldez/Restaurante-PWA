@@ -100,7 +100,7 @@ const AdminMenu = () => {
                     onClick={() => handleEdit(category.id)}
                     className="text-acento hover:text-acento-hover font-medium text-sm transition"
                   >
-                    {isServiceOpen ? 'Ver / Toggle' : 'Editar'}
+                    {isServiceOpen ? 'Ver' : 'Editar'}
                   </button>
                   <button
                     onClick={() => toggleCategoryActive(category.id, category.active)}

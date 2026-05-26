@@ -132,7 +132,7 @@ const AddProductToOrder = () => {
       <button onClick={() => navigate(`/view/${tableId}`)} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
-      <h2 className="text-3xl font-display font-bold text-texto mb-2">Agregar productos - Mesa {realTableNumber}</h2>
+      <h2 className="text-3xl font-display font-bold text-texto mb-2">Agregar productos - Mesa: {realTableNumber}</h2>
       <Card className="mb-4 inline-block px-4 py-2">
         <strong className="text-texto">Cliente:</strong> {order.clientName}
       </Card>

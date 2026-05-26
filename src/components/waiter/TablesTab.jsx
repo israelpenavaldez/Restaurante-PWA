@@ -53,7 +53,7 @@ const TablesTab = ({ onOccupy, onView }) => {
       {tables.map((table) => (
         <Card key={table.id} className="border-l-4 border-acento flex flex-col">
           <h3 className="text-2xl font-display font-bold text-texto mb-1">
-            Mesa {table.number}
+            Mesa: {table.number}
           </h3>
           {table.description && (
             <p className="text-sm text-texto-claro mb-2">{table.description}</p>
@@ -64,7 +64,7 @@ const TablesTab = ({ onOccupy, onView }) => {
 
           {table.status === 'free' ? (
             <Button variant="primary" onClick={() => onOccupy(table.id)} className="w-full mt-auto">
-              Ocupar
+              Atender
             </Button>
           ) : (
             <div className="mt-auto">
@@ -79,7 +79,7 @@ const TablesTab = ({ onOccupy, onView }) => {
                 )}
               </div>
               <Button variant="secondary" onClick={() => onView(table.id)} className="w-full">
-                Ver
+                Revisar
               </Button>
             </div>
           )}

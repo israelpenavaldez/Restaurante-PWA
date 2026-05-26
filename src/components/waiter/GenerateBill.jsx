@@ -119,7 +119,7 @@ const GenerateBill = () => {
 
       <Card className="text-center mb-6 border-b-4 border-borde">
         <h2 className="text-2xl font-display font-bold text-texto">
-          {billType === 'prepay' ? 'Pago anticipado' : 'Cuenta final'} - Mesa {realTableNumber}
+          {billType === 'prepay' ? 'Pago anticipado' : 'Cuenta final'} - Mesa: {realTableNumber}
         </h2>
         <p className="text-texto"><strong>Cliente:</strong> {order.clientName}</p>
         <p className="text-texto-claro"><strong>Fecha:</strong> {new Date().toLocaleString()}</p>

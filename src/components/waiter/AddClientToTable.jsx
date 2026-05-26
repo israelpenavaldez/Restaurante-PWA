@@ -133,7 +133,7 @@ const AddClientToTable = () => {
       <button onClick={() => navigate(`/view/${tableId}`)} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
-      <h2 className="text-3xl font-display font-bold text-texto mb-4">Agregar nueva orden - Mesa {realTableNumber}</h2>
+      <h2 className="text-3xl font-display font-bold text-texto mb-4">Agregar nueva orden - Mesa: {realTableNumber}</h2>
 
       <div className="mb-4">
         <input

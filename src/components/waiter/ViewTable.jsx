@@ -252,7 +252,7 @@ const ViewTable = () => {
       <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
-      <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa {realTableNumber} - Órdenes</h2>
+      <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa: {realTableNumber} - Órdenes</h2>
 
       {orders.map(order => {
         const isPrepaid = order.prepaid === true;
@@ -357,7 +357,7 @@ const ViewTable = () => {
 
       <div className="flex justify-end mt-4">
         <Button variant="primary" onClick={goToAddClient} disabled={isLocked || !isOnline}>
-          + Agregar Orden (Cliente)
+          + Nueva orden (Cliente)
         </Button>
       </div>
     </div>
