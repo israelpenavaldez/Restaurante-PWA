@@ -23,6 +23,8 @@ const GenerateBill = () => {
   const [categories, setCategories] = useState([]);
   const [realTableNumber, setRealTableNumber] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [isPaid, setIsPaid] = useState(false);
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
@@ -70,6 +72,11 @@ const GenerateBill = () => {
       try {
         checkWaiter();
 
+        if (!paymentMethod) {
+          notify('Selecciona un método de pago', 'warning');
+          return;
+        }
+
         const mensaje = billType === 'prepay'
           ? '¿Registrar pago anticipado?'
           : '¿Confirmar pago de la cuenta?';
@@ -77,19 +84,51 @@ const GenerateBill = () => {
         const ok = await confirm(mensaje);
         if (!ok) return;
 
+        const updateData = {
+          paymentMethod,
+          paidAt: Timestamp.now(),
+        };
+
         if (billType === 'prepay') {
-          await updateDoc(doc(db, 'orders', orderId), { prepaid: true });
+          updateData.prepaid = true;
+          await updateDoc(doc(db, 'orders', orderId), updateData);
           notify('Pago anticipado registrado', 'success');
+          // Actualizar estado local para el PDF
+          setOrder(prev => ({
+            ...prev,
+            paidAt: Timestamp.now(),
+            paymentMethod: paymentMethod,
+            prepaid: true
+          }));
         } else {
-          await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: Timestamp.now(), paidAt: Timestamp.now() });
+          updateData.status = 'completed';
+          updateData.completedAt = Timestamp.now();
+          await updateDoc(doc(db, 'orders', orderId), updateData);
           notify('Cuenta pagada', 'success');
+          // Actualizar estado local para el PDF
+          setOrder(prev => ({
+            ...prev,
+            paidAt: Timestamp.now(),
+            paymentMethod: paymentMethod,
+            status: 'completed',
+            completedAt: Timestamp.now()
+          }));
         }
-        navigate(`/view/${tableId}`);
+
+        setIsPaid(true);
       } catch (err) {
         notify(err.message, 'error');
         navigate('/dashboard');
       }
     });
+  };
+
+  const handleDownloadPDF = () => {
+    generateOrderPDF(order, categories, billType, paymentMethod);
+  };
+
+  const handleExit = () => {
+    navigate(`/view/${tableId}`);
   };
 
   if (loading || realTableNumber === null) return <div className="text-center mt-10 text-texto-claro">Cargando cuenta...</div>;
@@ -124,6 +163,20 @@ const GenerateBill = () => {
         <p className="text-texto"><strong>Cliente:</strong> {order.clientName}</p>
         <p className="text-texto-claro"><strong>Fecha:</strong> {new Date().toLocaleString()}</p>
       </Card>
+
+      <div className="mb-6">
+        <label className="block font-medium text-texto mb-2">Método de pago</label>
+        <select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          className="w-full p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition"
+          disabled={isPaid}
+        >
+          <option value="">Seleccione un método</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
 
       {Object.keys(grouped).map(category => (
         <div key={category} className="mb-6">
@@ -188,13 +241,21 @@ const GenerateBill = () => {
         <h3 className="text-2xl font-display font-bold text-texto">Total a pagar: <span className="text-acento">${total}</span></h3>
       </div>
 
-      <div className="flex justify-end mt-6">
-        <Button variant="secondary" onClick={() => generateOrderPDF(order, categories, billType)}>
-          Descargar comprobante
-        </Button>        
-        <Button variant="success" onClick={handleConfirm} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
-          {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}
-        </Button>
+      <div className="flex justify-end mt-6 gap-3">
+        {!isPaid ? (
+          <Button variant="success" onClick={handleConfirm} disabled={isLocked || !isOnline || !paymentMethod} className="px-8 py-3 text-lg">
+            {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}
+          </Button>
+        ) : (
+          <>
+            <Button variant="secondary" onClick={handleDownloadPDF}>
+              Descargar comprobante
+            </Button>
+            <Button variant="primary" onClick={handleExit}>
+              Salir
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

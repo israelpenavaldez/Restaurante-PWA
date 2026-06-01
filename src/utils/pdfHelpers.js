@@ -2,13 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { groupItemsForDisplay } from './helpers';
 
-/**
- * Genera y descarga un PDF con la cuenta de una orden, con formato de ticket.
- * @param {Object} order - Documento de orden
- * @param {Array} categories - Categorías del menú (no se usan)
- * @param {string} [billType='final'] - Tipo de cuenta (no se muestra)
- */
-export const generateOrderPDF = (order, categories, billType = 'final') => {
+export const generateOrderPDF = (order, categories, billType = 'final', paymentMethod = '') => {
   if (!order) return;
 
   const allItems = (order.batches || []).flatMap(batch =>
@@ -25,7 +19,6 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
 
   const doc = new jsPDF({ format: 'letter' });
 
-  // Tamaños de fuente
   const titleSize = 28;
   const subtitleSize = 24;
   const normalSize = 22;
@@ -36,32 +29,38 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
   doc.setFontSize(titleSize);
   doc.text("Cabaña \"El Lago\"", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
 
-  // Línea separadora
-  doc.setLineWidth(0.5);
-  doc.line(14, 30, doc.internal.pageSize.getWidth() - 14, 30);
+  if (paymentMethod) {
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(normalSize);
+    const metodoTexto = paymentMethod === 'efectivo' ? 'Efectivo' : 'Transferencia';
+    doc.text(`Método de pago: ${metodoTexto}`, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+  }
 
-  // Datos de la mesa y cliente
+  doc.setLineWidth(0.5);
+  doc.line(14, 36, doc.internal.pageSize.getWidth() - 14, 36);
+
+  // Fecha y hora del pago (con respaldo por si no existe)
+  const fechaPago = order.paidAt?.toDate() || new Date();
+
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(normalSize);
-  const fecha = new Date();
   const datos = [
     `Mesa: ${order.tableNumber}`,
     `Cliente: ${order.clientName}`,
-    `Fecha: ${fecha.toLocaleDateString()}`,
-    `Hora: ${fecha.toLocaleTimeString()}`,
+    `Fecha: ${fechaPago.toLocaleDateString()}`,
+    `Hora: ${fechaPago.toLocaleTimeString()}`,
   ];
-  let y = 40;
+  let y = 46;
   datos.forEach(linea => {
     doc.text(linea, 14, y);
     y += 10;
   });
 
-  // Línea separadora antes de la tabla
   y += 4;
   doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
   y += 8;
 
-  // ===== TABLA DE PRODUCTOS (sin columna Precio) =====
+  // ===== TABLA DE PRODUCTOS =====
   autoTable(doc, {
     startY: y,
     head: [['Producto', 'Cant.', 'Total']],
@@ -88,7 +87,7 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
   });
   y = doc.lastAutoTable.finalY + 10;
 
-  // ===== CANCELADOS (si existen) =====
+  // ===== CANCELADOS =====
   if (groupedCancelled.length > 0) {
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(normalSize);
@@ -122,7 +121,6 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
     y = doc.lastAutoTable.finalY + 10;
   }
 
-  // Línea separadora antes del total
   doc.setDrawColor(0);
   doc.setLineWidth(0.5);
   doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
@@ -135,8 +133,6 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
   doc.text(`Total a pagar: $${total.toFixed(2)}`, doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
 
   y += 16;
-
-  // Línea final
   doc.line(14, y, doc.internal.pageSize.getWidth() - 14, y);
   y += 12;
 
@@ -145,7 +141,6 @@ export const generateOrderPDF = (order, categories, billType = 'final') => {
   doc.setFontSize(normalSize);
   doc.text('Gracias por su preferencia', doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
 
-  // Guardar
   const fileName = `cuenta_mesa${order.tableNumber}_${order.clientName.replace(/\s+/g, '_')}.pdf`;
   doc.save(fileName);
 };
