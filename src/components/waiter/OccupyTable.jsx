@@ -57,9 +57,8 @@ const OccupyTable = () => {
   useEffect(() => {
     if (clients.length === 0 && !loadingMenu && realTableNumber !== null) {
       const now = new Date();
-      const formattedDate = now.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const formattedTime = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '-');
-      const generatedName = `M${realTableNumber}-${formattedDate}-${formattedTime}`;
+      const formattedTime = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const generatedName = `M-${realTableNumber}-${formattedTime}`;
       const firstClient = { id: Date.now(), name: generatedName, orders: [] };
       setClients([firstClient]);
       setActiveClientId(firstClient.id);
@@ -141,7 +140,9 @@ const OccupyTable = () => {
           if (client.name && client.name.trim() !== '') {
             finalClientName = client.name.trim();
           } else {
-            finalClientName = `M${realTableNumber}-${new Date().toLocaleString().replace(/[\/:,]/g, '-')}`;
+            const now = new Date();
+            const formattedTime = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+            finalClientName = `M-${realTableNumber}-${formattedTime}`;
           }
           const orderData = {
             tableId: tableId,

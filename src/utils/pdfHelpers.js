@@ -141,6 +141,15 @@ export const generateOrderPDF = (order, categories, billType = 'final', paymentM
   doc.setFontSize(normalSize);
   doc.text('Gracias por su preferencia', doc.internal.pageSize.getWidth() / 2, y, { align: 'center' });
 
-  const fileName = `cuenta_mesa${order.tableNumber}_${order.clientName.replace(/\s+/g, '_')}.pdf`;
+  const dia = String(fechaPago.getDate()).padStart(2, '0');
+  const mes = String(fechaPago.getMonth() + 1).padStart(2, '0');
+  const año = String(fechaPago.getFullYear()).slice(-2);
+  const fechaStr = `${dia}-${mes}-${año}`;
+
+  const horaStr = String(fechaPago.getHours()).padStart(2, '0');
+  const minStr = String(fechaPago.getMinutes()).padStart(2, '0');
+  const horaCompleta = `${horaStr}-${minStr}`;
+
+  const fileName = `Comprobante_Mesa-${order.tableNumber}_${order.clientName}_${fechaStr}_${horaCompleta}.pdf`;
   doc.save(fileName);
 };

@@ -93,7 +93,6 @@ const GenerateBill = () => {
           updateData.prepaid = true;
           await updateDoc(doc(db, 'orders', orderId), updateData);
           notify('Pago anticipado registrado', 'success');
-          // Actualizar estado local para el PDF
           setOrder(prev => ({
             ...prev,
             paidAt: Timestamp.now(),
@@ -105,7 +104,6 @@ const GenerateBill = () => {
           updateData.completedAt = Timestamp.now();
           await updateDoc(doc(db, 'orders', orderId), updateData);
           notify('Cuenta pagada', 'success');
-          // Actualizar estado local para el PDF
           setOrder(prev => ({
             ...prev,
             paidAt: Timestamp.now(),
@@ -127,7 +125,9 @@ const GenerateBill = () => {
     generateOrderPDF(order, categories, billType, paymentMethod);
   };
 
-  const handleExit = () => {
+  const handleExit = async () => {
+    const ok = await confirm('¿Esta seguro de salir?');
+    if (!ok) return;
     navigate(`/view/${tableId}`);
   };
 
