@@ -8,24 +8,37 @@ import AdminEmployees from './AdminEmployees';
 import AdminTables from './AdminTables';
 import Button from '../ui/Button';
 
+/**
+ * Panel de administración.
+ * Muestra una barra de navegación con pestañas que permiten al administrador
+ * gestionar el inicio, las mesas, el menú, los reportes y los empleados.
+ */
 const AdminDashboard = () => {
+  // Pestaña activa actual
   const [activeTab, setActiveTab] = useState('home');
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  /**
+   * Sincroniza la pestaña activa cuando se navega desde otras vistas
+   * que pasan el estado `activeTab` en la ubicación.
+   */
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
+      // Limpia el estado para que no persista al recargar la página
       window.history.replaceState({}, document.title);
     }
   }, [location]);
 
+  /** Cierra la sesión del usuario y redirige al inicio de sesión. */
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
+  // Definición de las pestañas disponibles en el panel
   const tabs = [
     { id: 'home', label: 'Inicio' },
     { id: 'tables', label: 'Editar mesas' },
@@ -36,7 +49,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-fondo">
-      {/* Header */}
+      {/* ===== CABECERA ===== */}
       <div className="bg-tarjeta shadow-md border-b border-borde-claro">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -55,7 +68,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* ===== BARRA DE PESTAÑAS ===== */}
       <div className="border-b border-borde-claro bg-tarjeta">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8 overflow-x-auto">
@@ -76,7 +89,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Contenido */}
+      {/* ===== CONTENIDO DE LA PESTAÑA ACTIVA ===== */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'home' && <AdminHome />}
         {activeTab === 'tables' && <AdminTables />}

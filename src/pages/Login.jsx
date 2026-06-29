@@ -5,6 +5,12 @@ import { useNotification } from '../context/NotificationContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
+/**
+ * Vista de inicio de sesión y registro.
+ * Permite al usuario iniciar sesión con su correo y contraseña,
+ * registrarse como nuevo usuario (quedando pendiente de aprobación),
+ * o solicitar un enlace de recuperación de contraseña.
+ */
 const LoginView = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -20,7 +26,10 @@ const LoginView = () => {
   const { user, userData, login, register, resetPassword } = useAuth();
   const navigate = useNavigate();
 
-  // Redirige al dashboard solo si el usuario está habilitado
+  /**
+   * Redirige automáticamente al panel correspondiente si el usuario
+   * ya está autenticado y su cuenta está habilitada.
+   */
   useEffect(() => {
     if (user && userData) {
       if (userData.enabled && userData.role !== 'pending') {
@@ -29,6 +38,11 @@ const LoginView = () => {
     }
   }, [user, userData, navigate]);
 
+  /**
+   * Maneja el envío del formulario, ya sea para iniciar sesión o para registrarse.
+   * En el registro, valida que el nombre no esté vacío, que las contraseñas coincidan
+   * y que la contraseña tenga al menos 6 caracteres.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -38,7 +52,7 @@ const LoginView = () => {
         await login(email, password);
         navigate('/dashboard');
       } else {
-        // Validaciones
+        // Validaciones del formulario de registro
         if (!displayName.trim()) {
           setError('El nombre es obligatorio');
           setLoading(false);
@@ -57,7 +71,7 @@ const LoginView = () => {
 
         await register(email, password, displayName.trim());
         notify('Registro exitoso. Espera la aprobación del administrador.', 'success');
-        // Limpiar y volver a inicio de sesión
+        // Limpiar campos y volver a la vista de inicio de sesión
         setIsLogin(true);
         setEmail('');
         setPassword('');
@@ -71,6 +85,10 @@ const LoginView = () => {
     }
   };
 
+  /**
+   * Envía un correo de recuperación de contraseña al email ingresado.
+   * Valida que el campo de email no esté vacío antes de enviar.
+   */
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -90,6 +108,7 @@ const LoginView = () => {
     }
   };
 
+  // ===== VISTA DE RECUPERACIÓN DE CONTRASEÑA =====
   if (showForgotPassword) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-fondo">
@@ -127,6 +146,7 @@ const LoginView = () => {
     );
   }
 
+  // ===== VISTA PRINCIPAL (INICIO DE SESIÓN / REGISTRO) =====
   return (
     <div className="flex justify-center items-center min-h-screen bg-fondo">
       <Card className="w-full max-w-md">
@@ -134,6 +154,7 @@ const LoginView = () => {
           {isLogin ? 'Iniciar Sesión' : 'Registro'}
         </h2>
 
+        {/* Mensaje de error */}
         {error && (
           <div className="bg-acento/10 text-acento p-2 rounded mb-4 text-sm">
             {error}
@@ -141,6 +162,7 @@ const LoginView = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Email (siempre visible) */}
           <input
             type="email"
             placeholder="Correo electrónico"
@@ -149,6 +171,7 @@ const LoginView = () => {
             className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
             required
           />
+          {/* Nombre (solo en registro) */}
           {!isLogin && (
             <input
               type="text"
@@ -159,6 +182,7 @@ const LoginView = () => {
               required
             />
           )}
+          {/* Contraseña */}
           <input
             type="password"
             placeholder="Contraseña"
@@ -167,6 +191,7 @@ const LoginView = () => {
             className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
             required
           />
+          {/* Confirmar contraseña (solo en registro) */}
           {!isLogin && (
             <input
               type="password"
@@ -183,6 +208,7 @@ const LoginView = () => {
           </Button>
         </form>
 
+        {/* Enlaces inferiores */}
         <div className="flex justify-between text-sm">
           <button
             onClick={() => setIsLogin(!isLogin)}

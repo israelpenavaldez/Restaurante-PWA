@@ -12,6 +12,12 @@ import { groupItemsForDisplay } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
+/**
+ * Vista para atender una mesa libre.
+ * Permite al mesero agregar uno o varios clientes, seleccionar categorías del menú,
+ * añadir productos con cantidad y notas, y enviar las órdenes a cocina.
+ * Al enviar, crea una orden por cada cliente y marca la mesa como ocupada.
+ */
 const OccupyTable = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
@@ -20,9 +26,10 @@ const OccupyTable = () => {
   const { withLock, isLocked } = useActionLock();
   const { notify, confirm, prompt } = useNotification();
 
-  const [clients, setClients] = useState([]);
-  const [activeClientId, setActiveClientId] = useState(null);
-  const [categories, setCategories] = useState([]);
+  // ===== ESTADOS =====
+  const [clients, setClients] = useState([]);                 // lista de clientes en la mesa
+  const [activeClientId, setActiveClientId] = useState(null); // cliente seleccionado
+  const [categories, setCategories] = useState([]);           // categorías del menú
   const [selectedCategory, setSelectedCategory] = useState('');
   const [productQuantities, setProductQuantities] = useState({});
   const [productNotes, setProductNotes] = useState({});
@@ -30,6 +37,12 @@ const OccupyTable = () => {
   const [realTableNumber, setRealTableNumber] = useState(null);
   const isOnline = useOnlineStatus();
 
+  // ===== CARGA INICIAL =====
+
+  /**
+   * Obtiene el número real de la mesa desde Firestore.
+   * Si no se encuentra, redirige al panel principal.
+   */
   useEffect(() => {
     const fetchTableNumber = async () => {
       const tableDoc = await getDoc(doc(db, 'tables', tableId));
@@ -43,6 +56,9 @@ const OccupyTable = () => {
     fetchTableNumber();
   }, [tableId, navigate]);
 
+  /**
+   * Carga todas las categorías del menú y selecciona la primera por defecto.
+   */
   useEffect(() => {
     const fetchMenu = async () => {
       const cats = await getMenuCategories();
@@ -54,10 +70,18 @@ const OccupyTable = () => {
     fetchMenu();
   }, []);
 
+  /**
+   * Crea automáticamente el primer cliente con un nombre generado
+   * a partir del número de mesa y la hora actual.
+   */
   useEffect(() => {
     if (clients.length === 0 && !loadingMenu && realTableNumber !== null) {
       const now = new Date();
-      const formattedTime = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const formattedTime = now.toLocaleTimeString('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
       const generatedName = `M-${realTableNumber}-${formattedTime}`;
       const firstClient = { id: Date.now(), name: generatedName, orders: [] };
       setClients([firstClient]);
@@ -65,6 +89,12 @@ const OccupyTable = () => {
     }
   }, [loadingMenu, realTableNumber, clients.length]);
 
+  // ===== GESTIÓN DE CLIENTES =====
+
+  /**
+   * Agrega un nuevo cliente a la mesa.
+   * Solicita el nombre mediante un prompt (obligatorio).
+   */
   const handleAddClient = async () => {
     const newName = await prompt('Ingrese el nombre del nuevo cliente (obligatorio):');
     if (!newName || newName.trim() === '') {
@@ -76,6 +106,11 @@ const OccupyTable = () => {
     setActiveClientId(newClient.id);
   };
 
+  /**
+   * Elimina un cliente de la mesa.
+   * No permite eliminar al último cliente restante.
+   * @param {number} clientId - ID del cliente a eliminar.
+   */
   const handleRemoveClient = (clientId) => {
     if (clients.length === 1) {
       notify('No se puede eliminar el último cliente.', 'warning');
@@ -85,10 +120,24 @@ const OccupyTable = () => {
     if (activeClientId === clientId) setActiveClientId(clients[0].id);
   };
 
+  /**
+   * Actualiza el nombre de un cliente existente.
+   * @param {number} clientId - ID del cliente.
+   * @param {string} name - Nuevo nombre del cliente.
+   */
   const updateClientName = (clientId, name) => {
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, name } : c));
   };
 
+  // ===== GESTIÓN DE PRODUCTOS =====
+
+  /**
+   * Agrega un producto a la orden del cliente seleccionado.
+   * @param {number} clientId - ID del cliente.
+   * @param {Object} product - Producto seleccionado.
+   * @param {number} quantity - Cantidad del producto.
+   * @param {string} notes - Notas de modificación opcionales.
+   */
   const addProductToClient = (clientId, product, quantity, notes) => {
     if (quantity <= 0) return;
     const newOrder = {
@@ -107,20 +156,35 @@ const OccupyTable = () => {
     setProductNotes(prev => ({ ...prev, [product.id]: '' }));
   };
 
+  /**
+   * Elimina uno o varios productos de la orden de un cliente.
+   * @param {number} clientId - ID del cliente.
+   * @param {number[]} itemIds - IDs de los productos a eliminar.
+   */
   const removeOrders = (clientId, itemIds) => {
     setClients(prev => prev.map(c =>
       c.id === clientId ? { ...c, orders: c.orders.filter(o => !itemIds.includes(o.id)) } : c
     ));
   };
 
+  // ===== ENVÍO A COCINA =====
+
+  /**
+   * Envía las órdenes de todos los clientes a cocina.
+   * Valida que cada cliente tenga al menos un producto y que los clientes
+   * adicionales tengan nombre. Crea una orden por cliente y marca la mesa como ocupada.
+   */
   const handleSubmit = () => {
     withLock(async () => {
       try {
         checkWaiter();
+
         if (realTableNumber === null) {
           notify('Error: número de mesa no disponible', 'error');
           return;
         }
+
+        // Validar que cada cliente tenga productos
         for (const client of clients) {
           if (client.orders.length === 0) {
             notify(`El cliente ${client.name || 'desconocido'} no tiene productos`, 'warning');
@@ -132,23 +196,37 @@ const OccupyTable = () => {
           }
         }
 
+        // Confirmación antes de enviar
         const ok = await confirm('¿Enviar las órdenes a cocina?');
         if (!ok) return;
 
+        // Crear una orden por cada cliente
         for (const client of clients) {
           let finalClientName;
           if (client.name && client.name.trim() !== '') {
             finalClientName = client.name.trim();
           } else {
+            // Nombre generado para el cliente principal sin nombre
             const now = new Date();
-            const formattedTime = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const formattedTime = now.toLocaleTimeString('es-MX', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            });
             finalClientName = `M-${realTableNumber}-${formattedTime}`;
           }
+
           const orderData = {
             tableId: tableId,
             tableNumber: realTableNumber,
             clientName: finalClientName,
-            batches: [{ batchId: 1, timestamp: Timestamp.now(), status: 'pending', items: client.orders, deliveredAt: null }],
+            batches: [{
+              batchId: 1,
+              timestamp: Timestamp.now(),
+              status: 'pending',
+              items: client.orders,
+              deliveredAt: null
+            }],
             status: 'pending',
             prepaid: false,
             createdAt: Timestamp.now(),
@@ -156,8 +234,11 @@ const OccupyTable = () => {
             completedAt: null,
             total: client.orders.reduce((sum, item) => sum + item.price * item.quantity, 0)
           };
+
           await createOrder(orderData);
         }
+
+        // Marcar la mesa como ocupada
         await updateTable(tableId, { status: 'occupied', occupiedSince: Timestamp.now() });
         notify('Órdenes enviadas a cocina', 'success');
         navigate('/dashboard');
@@ -168,10 +249,14 @@ const OccupyTable = () => {
     }, (error) => notify(error.message, 'error'));
   };
 
+  // ===== DATOS DE LA VISTA =====
+
   const activeClient = clients.find(c => c.id === activeClientId);
   const currentCategory = categories.find(cat => cat.id === selectedCategory);
   const products = currentCategory?.items || [];
   const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
+
+  // ===== RENDERIZADO =====
 
   if (loadingMenu || clients.length === 0 || realTableNumber === null) {
     return <div className="text-center mt-10 text-texto-claro">Cargando...</div>;
@@ -179,11 +264,14 @@ const OccupyTable = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
+      {/* ===== BOTÓN VOLVER ===== */}
       <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
+
       <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa: {realTableNumber}</h2>
 
+      {/* ===== PÍLDORAS DE CLIENTES ===== */}
       <div className="flex flex-wrap gap-2 mb-6">
         {clients.map(client => (
           <div key={client.id} className="relative">
@@ -197,6 +285,7 @@ const OccupyTable = () => {
             >
               {client.name || 'Cliente sin nombre'}
             </button>
+            {/* Botón para eliminar cliente */}
             <button
               onClick={() => handleRemoveClient(client.id)}
               className="absolute -top-2 -right-2 bg-acento text-texto-inverso rounded-full w-5 h-5 flex items-center justify-center text-xs shadow"
@@ -206,6 +295,7 @@ const OccupyTable = () => {
             </button>
           </div>
         ))}
+        {/* Botón para agregar cliente adicional */}
         <button
           onClick={handleAddClient}
           className="bg-boton-exito hover:bg-boton-exito-hover text-boton-exito-texto px-4 py-2 rounded-full font-semibold transition"
@@ -214,6 +304,7 @@ const OccupyTable = () => {
         </button>
       </div>
 
+      {/* ===== NOMBRE DEL CLIENTE ACTIVO ===== */}
       <div className="mb-4">
         <input
           type="text"
@@ -227,6 +318,7 @@ const OccupyTable = () => {
         )}
       </div>
 
+      {/* ===== SELECTOR DE CATEGORÍA ===== */}
       <div className="mb-4">
         <label className="block font-medium text-texto mb-1">Categoría:</label>
         <select
@@ -240,15 +332,19 @@ const OccupyTable = () => {
         </select>
       </div>
 
+      {/* ===== CUADRÍCULA DE PRODUCTOS ===== */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
         {sortedProducts.map(product => (
           <Card
             key={product.id}
             className={`flex flex-col items-center text-center ${product.active === false ? 'opacity-50' : ''}`}
           >
+            {/* Etiqueta para productos no disponibles */}
             {product.active === false && (
               <span className="text-xs text-acento font-medium mb-1">No disponible</span>
             )}
+
+            {/* Imagen del producto (variante → categoría → placeholder) */}
             <div className="flex justify-center mb-3">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="w-20 h-20 object-cover rounded-full border-2 border-borde" />
@@ -258,8 +354,11 @@ const OccupyTable = () => {
                 <div className="w-20 h-20 bg-tarjeta-alt/30 rounded-full flex items-center justify-center text-3xl">🍽️</div>
               )}
             </div>
+
             <h4 className="font-display font-bold text-texto">{product.name}</h4>
             <p className="text-texto-aviso font-bold text-lg mb-2">${product.price}</p>
+
+            {/* Campos de cantidad, notas y botón Agregar */}
             <div className="mt-auto space-y-2 w-full">
               <input
                 type="text"
@@ -297,6 +396,7 @@ const OccupyTable = () => {
         ))}
       </div>
 
+      {/* ===== RESUMEN DEL CLIENTE ACTIVO ===== */}
       <Card className="mb-6">
         <h3 className="font-display font-bold text-xl text-texto mb-3">Resumen de {activeClient?.name || 'cliente'}</h3>
         {activeClient?.orders.length === 0 ? (
@@ -318,6 +418,7 @@ const OccupyTable = () => {
         )}
       </Card>
 
+      {/* ===== BOTÓN ENVIAR A COCINA ===== */}
       <div className="flex justify-end">
         <Button variant="success" onClick={handleSubmit} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
           {isLocked ? 'Enviando...' : 'Enviar a cocina'}

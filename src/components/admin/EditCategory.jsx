@@ -9,6 +9,12 @@ import Button from '../ui/Button';
 
 const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
 
+/**
+ * Editor de categoría del menú.
+ * Permite crear o modificar una categoría (nombre, descripción, imagen, estado)
+ * y gestionar sus variantes (agregar, editar, eliminar, activar/desactivar).
+ * Incluye validación para evitar guardar variantes sin nombre o con precio ≤ 0.
+ */
 const EditCategory = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
@@ -16,25 +22,32 @@ const EditCategory = () => {
   const queryParams = new URLSearchParams(location.search);
   const variantId = queryParams.get('variant');
 
+  // ===== ESTADOS DE LA CATEGORÍA =====
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [variants, setVariants] = useState([]);
-  const [activeVariant, setActiveVariant] = useState(null);
+  const [activeVariant, setActiveVariant] = useState(null);  // variante en edición
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadingVariant, setUploadingVariant] = useState(false);
+  const [uploading, setUploading] = useState(false);           // imagen de categoría
+  const [uploadingVariant, setUploadingVariant] = useState(false); // imagen de variante
 
   const { isServiceOpen } = useAuth();
   const { notify, confirm } = useNotification();
 
-  // Determina si hay variantes incompletas
+  /**
+   * Determina si hay al menos una variante que no cumple
+   * con los requisitos mínimos (nombre y precio > 0).
+   */
   const hasIncompleteVariants = useMemo(() => {
     return variants.some(v => !v.name.trim() || v.price <= 0);
   }, [variants]);
 
+  // ===== CARGA INICIAL =====
+
+  /** Carga los datos de la categoría desde Firestore (o prepara una nueva). */
   useEffect(() => {
     const fetchCategory = async () => {
       if (categoryId === 'new') { setLoading(false); return; }
@@ -58,6 +71,7 @@ const EditCategory = () => {
     fetchCategory();
   }, [categoryId, navigate, notify]);
 
+  /** Si se pasa un variantId por URL, selecciona esa variante para editar. */
   useEffect(() => {
     if (variantId && variants.length) {
       const v = variants.find(v => v.id === parseInt(variantId));
@@ -65,6 +79,13 @@ const EditCategory = () => {
     }
   }, [variantId, variants]);
 
+  // ===== SUBIDA DE IMÁGENES A IMGBB =====
+
+  /**
+   * Sube una imagen al servicio ImgBB y devuelve la URL pública.
+   * @param {File} file - Archivo de imagen a subir.
+   * @returns {Promise<string>} URL de la imagen subida.
+   */
   const uploadToImgBB = async (file) => {
     const fd = new FormData();
     fd.append('image', file);
@@ -74,6 +95,7 @@ const EditCategory = () => {
     throw new Error('Error al subir');
   };
 
+  /** Maneja la subida de imagen para la categoría. */
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -83,6 +105,7 @@ const EditCategory = () => {
     finally { setUploading(false); }
   };
 
+  /** Maneja la subida de imagen para la variante activa. */
   const handleVariantImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -97,13 +120,19 @@ const EditCategory = () => {
     }
   };
 
+  // ===== OPERACIONES SOBRE LA CATEGORÍA =====
+
+  /**
+   * Guarda la categoría (crea o actualiza) en Firestore.
+   * Valida que el nombre no esté vacío y que todas las variantes
+   * tengan nombre y precio > 0 antes de guardar.
+   */
   const handleSave = async () => {
     if (!name.trim()) {
       notify('El nombre de la categoría es obligatorio', 'warning');
       return;
     }
 
-    // Validación extra, aunque el botón esté deshabilitado
     const incomplete = variants.find(v => !v.name.trim() || v.price <= 0);
     if (incomplete) {
       notify(`Corrige la variante "${incomplete.name || 'sin nombre'}" antes de guardar.`, 'warning');
@@ -134,6 +163,44 @@ const EditCategory = () => {
     }
   };
 
+  /**
+   * Alterna el estado activo/inactivo de la categoría
+   * y sincroniza el mismo estado en todas sus variantes.
+   */
+  const toggleCategoryActive = async () => {
+    const ok = await confirm(isActive ? '¿Desactivar esta categoría?' : '¿Activar esta categoría?');
+    if (!ok) return;
+
+    const newActive = !isActive;
+    const updatedVariants = variants.map(v => ({ ...v, active: newActive }));
+
+    setIsActive(newActive);
+    setVariants(updatedVariants);
+    try {
+      await updateDoc(doc(db, 'menuCategories', categoryId), {
+        active: newActive,
+        items: updatedVariants,
+      });
+      notify(newActive ? 'Categoría activada (todas las variantes fueron activadas)' : 'Categoría desactivada (todas las variantes fueron desactivadas)', 'success');
+    } catch (error) {
+      console.error(error);
+      notify('Error al cambiar estado', 'error');
+      setIsActive(!newActive); // revertir
+      setVariants(variants);
+    }
+  };
+
+  /** Quita la imagen de la categoría (con confirmación). */
+  const handleRemoveImage = async () => {
+    if (!imageUrl) return;
+    const ok = await confirm('¿Quitar la imagen de la categoría?');
+    if (!ok) return;
+    setImageUrl('');
+  };
+
+  // ===== OPERACIONES SOBRE VARIANTES =====
+
+  /** Agrega una nueva variante con valores por defecto (requiere edición posterior). */
   const addVariant = () => {
     if (isServiceOpen) {
       notify('No puede agregar variantes con el servicio abierto', 'warning');
@@ -144,6 +211,10 @@ const EditCategory = () => {
     setActiveVariant(v);
   };
 
+  /**
+   * Guarda los cambios de la variante que se está editando.
+   * @param {Object} updated - Variante con los datos modificados.
+   */
   const updateVariant = async (updated) => {
     if (!updated.name.trim()) {
       notify('El nombre de la variante es obligatorio', 'warning');
@@ -159,6 +230,7 @@ const EditCategory = () => {
     setActiveVariant(null);
   };
 
+  /** Elimina una variante (con confirmación). */
   const deleteVariant = async (id) => {
     if (isServiceOpen) {
       notify('No puede eliminar variantes con el servicio abierto', 'warning');
@@ -177,6 +249,7 @@ const EditCategory = () => {
     }
   };
 
+  /** Alterna el estado activo/inactivo de una variante individual. */
   const toggleVariantActive = async (id) => {
     const variant = variants.find(v => v.id === id);
     const ok = await confirm(variant?.active ? '¿Desactivar esta variante?' : '¿Activar esta variante?');
@@ -198,37 +271,7 @@ const EditCategory = () => {
     }
   };
 
-  const toggleCategoryActive = async () => {
-    const ok = await confirm(isActive ? '¿Desactivar esta categoría?' : '¿Activar esta categoría?');
-    if (!ok) return;
-
-    const newActive = !isActive;
-    // Siempre sincronizamos el estado de todas las variantes con el de la categoría
-    const updatedVariants = variants.map(v => ({ ...v, active: newActive }));
-
-    setIsActive(newActive);
-    setVariants(updatedVariants);
-    try {
-      await updateDoc(doc(db, 'menuCategories', categoryId), {
-        active: newActive,
-        items: updatedVariants,
-      });
-      notify(newActive ? 'Categoría activada (todas las variantes fueron activadas)' : 'Categoría desactivada (todas las variantes fueron desactivadas)', 'success');
-    } catch (error) {
-      console.error(error);
-      notify('Error al cambiar estado', 'error');
-      setIsActive(!newActive); // revertir
-      setVariants(variants);
-    }
-  };
-
-  const handleRemoveImage = async () => {
-    if (!imageUrl) return;
-    const ok = await confirm('¿Quitar la imagen de la categoría?');
-    if (!ok) return;
-    setImageUrl('');
-  };
-
+  /** Quita la imagen de la variante activa (con confirmación). */
   const handleRemoveVariantImage = async () => {
     if (!activeVariant?.imageUrl) return;
     const ok = await confirm('¿Quitar la imagen de la variante?');
@@ -236,8 +279,10 @@ const EditCategory = () => {
     setActiveVariant(prev => ({ ...prev, imageUrl: '' }));
   };
 
-  // Función para saber si una variante está incompleta
+  /** Indica si una variante tiene campos obligatorios vacíos o inválidos. */
   const isVariantIncomplete = (v) => !v.name.trim() || v.price <= 0;
+
+  // ===== RENDERIZADO =====
 
   if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando...</div>;
 
@@ -254,6 +299,7 @@ const EditCategory = () => {
           {categoryId === 'new' ? 'Nueva categoría' : `Editar ${name}`}
         </h2>
 
+        {/* Aviso cuando el servicio está abierto */}
         {isEditingBlocked && (
           <div className="bg-acento/10 text-acento rounded-xl p-4 mb-6">
             <p className="font-medium">Servicio abierto</p>
@@ -261,6 +307,7 @@ const EditCategory = () => {
           </div>
         )}
 
+        {/* ===== IMAGEN DE LA CATEGORÍA ===== */}
         <div className="mb-4 flex items-start space-x-4">
           <div className="w-32 h-32 bg-tarjeta-alt/30 rounded-xl overflow-hidden flex-shrink-0">
             <img src={imageUrl || 'https://via.placeholder.com/128?text=Sin+imagen'} alt={name || 'Categoría'} className="w-full h-full object-cover" />
@@ -282,6 +329,7 @@ const EditCategory = () => {
           </div>
         </div>
 
+        {/* ===== CAMPOS DE TEXTO DE LA CATEGORÍA ===== */}
         <div className="space-y-4 mb-6">
           <div>
             <label className="block font-medium text-texto mb-1">Nombre de categoría *</label>
@@ -314,6 +362,7 @@ const EditCategory = () => {
           </div>
         </div>
 
+        {/* ===== GESTIÓN DE VARIANTES ===== */}
         <div className="border-t border-borde-claro pt-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-display font-bold text-texto">Variantes</h3>
@@ -322,6 +371,7 @@ const EditCategory = () => {
             </Button>
           </div>
 
+          {/* Editor de la variante activa */}
           {activeVariant && (
             <Card className="mb-4 bg-tarjeta-alt/10">
               <h4 className="font-display font-bold text-texto mb-3">
@@ -329,6 +379,7 @@ const EditCategory = () => {
               </h4>
 
               {isServiceOpen ? (
+                /* Modo solo toggle cuando el servicio está abierto */
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-texto">{activeVariant.name}</p>
@@ -344,6 +395,7 @@ const EditCategory = () => {
                   </button>
                 </div>
               ) : (
+                /* Editor completo de la variante */
                 <>
                   <div className="mb-3 flex items-start space-x-4">
                     <div className="w-20 h-20 bg-tarjeta-alt/30 rounded-xl overflow-hidden flex-shrink-0">
@@ -383,6 +435,7 @@ const EditCategory = () => {
             </Card>
           )}
 
+          {/* Lista de variantes existentes */}
           <ul className="space-y-2">
             {variants.map(v => {
               const incomplete = isVariantIncomplete(v);
@@ -424,6 +477,7 @@ const EditCategory = () => {
           {variants.length === 0 && <p className="text-texto-claro text-sm mt-2">No hay variantes</p>}
         </div>
 
+        {/* ===== BOTONES DE ACCIÓN FINALES ===== */}
         <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-borde-claro">
           <Button variant="secondary" onClick={() => navigate('/dashboard', { state: { activeTab: 'menu' } })}>Cancelar</Button>
           {!isServiceOpen && (

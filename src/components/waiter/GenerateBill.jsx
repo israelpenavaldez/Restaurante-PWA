@@ -12,25 +12,35 @@ import useOnlineStatus from '../../hooks/useOnlineStatus';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
+/**
+ * Vista de generación de cuenta y cobro.
+ * Muestra el detalle de una orden (productos agrupados por categoría, cancelados y total),
+ * permite seleccionar el método de pago (Efectivo o Transferencia) y confirmar el cobro.
+ * Tras el pago, habilita la descarga del comprobante PDF y la salida hacia la vista de la mesa.
+ */
 const GenerateBill = () => {
   const { tableId, orderId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const billType = queryParams.get('type');
+  const billType = queryParams.get('type'); // 'prepay' o 'final'
 
+  // ===== ESTADOS =====
   const [order, setOrder] = useState(null);
   const [categories, setCategories] = useState([]);
   const [realTableNumber, setRealTableNumber] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [isPaid, setIsPaid] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(''); // 'efectivo' | 'transferencia'
+  const [isPaid, setIsPaid] = useState(false);           // controla el estado post‑pago
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
   const { notify, confirm } = useNotification();
   const isOnline = useOnlineStatus();
 
+  // ===== VALIDACIÓN DEL TIPO DE CUENTA =====
+
+  /** Verifica que el tipo de cuenta (prepay o final) sea válido. */
   useEffect(() => {
     const validTypes = ['prepay', 'final'];
     if (!validTypes.includes(billType)) {
@@ -39,6 +49,9 @@ const GenerateBill = () => {
     }
   }, [billType, navigate, tableId]);
 
+  // ===== CARGA INICIAL =====
+
+  /** Obtiene el número real de la mesa desde Firestore. */
   useEffect(() => {
     const fetchTableNumber = async () => {
       const tableDoc = await getDoc(doc(db, 'tables', tableId));
@@ -51,6 +64,10 @@ const GenerateBill = () => {
     fetchTableNumber();
   }, [tableId]);
 
+  /**
+   * Carga los datos de la orden y las categorías del menú.
+   * Si la orden no existe, notifica el error y redirige.
+   */
   useEffect(() => {
     const fetchData = async () => {
       const orderDoc = await getDoc(doc(db, 'orders', orderId));
@@ -67,11 +84,21 @@ const GenerateBill = () => {
     fetchData();
   }, [orderId, tableId, navigate]);
 
+  // ===== CONFIRMACIÓN DEL PAGO =====
+
+  /**
+   * Procesa el cobro de la cuenta.
+   * Valida que se haya seleccionado un método de pago,
+   * solicita confirmación y actualiza la orden en Firestore.
+   * Después del pago, activa el estado `isPaid` para mostrar
+   * los botones de descarga y salida.
+   */
   const handleConfirm = () => {
     withLock(async () => {
       try {
         checkWaiter();
 
+        // Validar que se haya seleccionado un método de pago
         if (!paymentMethod) {
           notify('Selecciona un método de pago', 'warning');
           return;
@@ -84,12 +111,14 @@ const GenerateBill = () => {
         const ok = await confirm(mensaje);
         if (!ok) return;
 
+        // Datos comunes a cualquier tipo de pago
         const updateData = {
           paymentMethod,
           paidAt: Timestamp.now(),
         };
 
         if (billType === 'prepay') {
+          // Pago anticipado: solo marca como prepagado
           updateData.prepaid = true;
           await updateDoc(doc(db, 'orders', orderId), updateData);
           notify('Pago anticipado registrado', 'success');
@@ -100,6 +129,7 @@ const GenerateBill = () => {
             prepaid: true
           }));
         } else {
+          // Pago total: marca como completado
           updateData.status = 'completed';
           updateData.completedAt = Timestamp.now();
           await updateDoc(doc(db, 'orders', orderId), updateData);
@@ -121,23 +151,39 @@ const GenerateBill = () => {
     });
   };
 
+  /** Genera y descarga el comprobante PDF de la cuenta. */
   const handleDownloadPDF = () => {
     generateOrderPDF(order, categories, billType, paymentMethod);
   };
 
+  /**
+   * Sale de la vista de cuenta y regresa a la vista de la mesa.
+   * Solicita confirmación antes de salir.
+   */
   const handleExit = async () => {
-    const ok = await confirm('¿Esta seguro de salir?');
+    const ok = await confirm('¿Está seguro de salir?');
     if (!ok) return;
     navigate(`/view/${tableId}`);
   };
 
-  if (loading || realTableNumber === null) return <div className="text-center mt-10 text-texto-claro">Cargando cuenta...</div>;
+  // ===== PROCESAMIENTO DE DATOS PARA LA VISTA =====
+
+  if (loading || realTableNumber === null)
+    return <div className="text-center mt-10 text-texto-claro">Cargando cuenta...</div>;
   if (!order) return null;
 
-  const allItems = (order.batches || []).flatMap(batch => batch.items.filter(item => item.status !== 'cancelled'));
-  const cancelledItems = (order.batches || []).flatMap(batch => batch.items.filter(item => item.status === 'cancelled'));
+  // Productos activos (no cancelados)
+  const allItems = (order.batches || []).flatMap(batch =>
+    batch.items.filter(item => item.status !== 'cancelled')
+  );
+
+  // Productos cancelados
+  const cancelledItems = (order.batches || []).flatMap(batch =>
+    batch.items.filter(item => item.status === 'cancelled')
+  );
   const groupedCancelled = groupItemsForDisplay(cancelledItems);
 
+  // Agrupar productos por categoría
   const grouped = {};
   allItems.forEach(item => {
     const cat = getProductCategory(item.name, categories);
@@ -148,14 +194,19 @@ const GenerateBill = () => {
     grouped[cat] = groupItemsForDisplay(grouped[cat]);
   });
 
+  // Total de la cuenta
   const total = allItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // ===== RENDERIZADO =====
 
   return (
     <div className="max-w-3xl mx-auto p-4 bg-fondo min-h-screen">
+      {/* ===== BOTÓN VOLVER ===== */}
       <button onClick={() => navigate(`/view/${tableId}`)} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
 
+      {/* ===== CABECERA DE LA CUENTA ===== */}
       <Card className="text-center mb-6 border-b-4 border-borde">
         <h2 className="text-2xl font-display font-bold text-texto">
           {billType === 'prepay' ? 'Pago anticipado' : 'Cuenta final'} - Mesa: {realTableNumber}
@@ -164,6 +215,7 @@ const GenerateBill = () => {
         <p className="text-texto-claro"><strong>Fecha:</strong> {new Date().toLocaleString()}</p>
       </Card>
 
+      {/* ===== SELECTOR DE MÉTODO DE PAGO ===== */}
       <div className="mb-6">
         <label className="block font-medium text-texto mb-2">Método de pago</label>
         <select
@@ -178,6 +230,7 @@ const GenerateBill = () => {
         </select>
       </div>
 
+      {/* ===== TABLAS DE PRODUCTOS POR CATEGORÍA ===== */}
       {Object.keys(grouped).map(category => (
         <div key={category} className="mb-6">
           <h3 className="bg-tarjeta-alt/30 text-texto px-4 py-2 rounded-t-xl font-display font-bold">{category}</h3>
@@ -209,6 +262,7 @@ const GenerateBill = () => {
         </div>
       ))}
 
+      {/* ===== PRODUCTOS CANCELADOS (si existen) ===== */}
       {groupedCancelled.length > 0 && (
         <div className="mb-6">
           <h3 className="bg-acento/10 text-acento px-4 py-2 rounded-t-xl font-display font-bold">Cancelados</h3>
@@ -237,16 +291,27 @@ const GenerateBill = () => {
         </div>
       )}
 
+      {/* ===== TOTAL A PAGAR ===== */}
       <div className="text-right mt-6 pt-4 border-t-2 border-borde">
-        <h3 className="text-2xl font-display font-bold text-texto">Total a pagar: <span className="text-acento">${total}</span></h3>
+        <h3 className="text-2xl font-display font-bold text-texto">
+          Total a pagar: <span className="text-acento">${total}</span>
+        </h3>
       </div>
 
+      {/* ===== BOTONES DE ACCIÓN ===== */}
       <div className="flex justify-end mt-6 gap-3">
         {!isPaid ? (
-          <Button variant="success" onClick={handleConfirm} disabled={isLocked || !isOnline || !paymentMethod} className="px-8 py-3 text-lg">
+          /* Estado previo al pago: botón de confirmación */
+          <Button
+            variant="success"
+            onClick={handleConfirm}
+            disabled={isLocked || !isOnline || !paymentMethod}
+            className="px-8 py-3 text-lg"
+          >
             {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}
           </Button>
         ) : (
+          /* Estado post‑pago: descarga y salida */
           <>
             <Button variant="secondary" onClick={handleDownloadPDF}>
               Descargar comprobante

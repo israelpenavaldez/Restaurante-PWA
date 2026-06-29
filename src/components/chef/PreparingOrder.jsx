@@ -6,18 +6,51 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
-const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMarkItemReady, onUnmarkItemReady, isLocked }) => {
+/**
+ * Vista de un lote en preparación en el panel de cocina.
+ * Muestra los productos del lote con su estado actual (pendiente, listo, entregado, cancelado)
+ * y permite marcar productos como listos (con cantidad opcional) o desmarcarlos.
+ *
+ * @param {Object} props - Propiedades del componente.
+ * @param {string} props.orderId - ID de la orden a la que pertenece el lote.
+ * @param {Object} props.batch - Datos del lote (batches, items, etc.).
+ * @param {string} props.tableNumber - Número de mesa asociada.
+ * @param {string} props.clientName - Nombre del cliente.
+ * @param {boolean} props.prepaid - Indica si la orden fue pagada por anticipado.
+ * @param {Function} props.onMarkItemReady - Función para marcar un producto como listo.
+ * @param {Function} props.onUnmarkItemReady - Función para desmarcar un producto listo.
+ * @param {boolean} props.isLocked - Indica si las acciones están bloqueadas.
+ */
+const PreparingOrder = ({
+  orderId,
+  batch,
+  tableNumber,
+  clientName,
+  prepaid,
+  onMarkItemReady,
+  onUnmarkItemReady,
+  isLocked,
+}) => {
   const { notify, confirm, prompt } = useNotification();
   const isOnline = useOnlineStatus();
 
+  /**
+   * Marca un producto como listo.
+   * Si la cantidad es 1, solicita confirmación y lo marca directamente.
+   * Si la cantidad es mayor a 1, pregunta cuántas unidades están listas (por defecto, todas)
+   * y valida que el valor ingresado sea correcto.
+   * @param {Object} item - Producto a marcar como listo.
+   */
   const handleMarkReady = async (item) => {
     if (item.quantity === 1) {
-      const ok = await confirm(`¿"${item.name}" esta listo?`);
+      // Caso simple: una sola unidad
+      const ok = await confirm(`¿"${item.name}" está listo?`);
       if (!ok) return;
       onMarkItemReady(orderId, batch.batchId, item.id, 1);
     } else {
+      // Caso con cantidad > 1: preguntar cuántas unidades
       const input = await prompt(
-        `¿Cuántos "${item.name}" estan listos? (1-${item.quantity})`,
+        `¿Cuántos "${item.name}" están listos? (1-${item.quantity})`,
         String(item.quantity) // valor por defecto: todas
       );
       if (!input) return;
@@ -30,6 +63,11 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
     }
   };
 
+  /**
+   * Revierte el estado de un producto de 'listo' a 'pendiente'.
+   * Solicita confirmación antes de ejecutar la acción.
+   * @param {Object} item - Producto a desmarcar.
+   */
   const handleUnmarkReady = async (item) => {
     const ok = await confirm(`¿Desmarcar "${item.name}" como listo?`);
     if (!ok) return;
@@ -38,7 +76,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
 
   return (
     <Card className="overflow-hidden !p-0">
-      {/* Cabecera */}
+      {/* ===== CABECERA DEL LOTE ===== */}
       <div className="bg-tarjeta-alt/20 px-6 py-4 border-b border-borde-claro">
         <div className="flex justify-between items-start">
           <div>
@@ -47,6 +85,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
             <p className="text-sm text-texto-claro mt-1">
               Lote #{batch.batchId} · Pedido hace {formatElapsedTime(batch.timestamp)}
             </p>
+            {/* Etiqueta visible si la orden fue prepagada */}
             {prepaid && (
               <span className="inline-block mt-2 text-xs bg-boton-aviso/20 text-insignia-pendiente-texto px-3 py-1 rounded-full font-medium">
                 Prepagado
@@ -60,11 +99,12 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
         </div>
       </div>
 
-      {/* Lista de productos */}
+      {/* ===== LISTA DE PRODUCTOS DEL LOTE ===== */}
       <div className="p-6">
         <h3 className="text-lg font-display font-bold text-texto mb-4">Productos</h3>
         <div className="space-y-3">
           {batch.items.map(item => {
+            // Producto ya entregado
             if (item.status === 'delivered') {
               return (
                 <div key={item.id} className="flex justify-between items-center border-b border-borde-claro pb-2 text-texto-claro">
@@ -77,6 +117,8 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                 </div>
               );
             }
+
+            // Producto cancelado
             if (item.status === 'cancelled') {
               return (
                 <div key={item.id} className="flex justify-between items-center border-b border-borde-claro pb-2 text-insignia-cancelado-texto">
@@ -90,7 +132,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
               );
             }
 
-            // Pendiente o listo
+            // Producto pendiente o listo (con acciones disponibles)
             return (
               <div key={item.id} className="flex justify-between items-center border-b border-borde-claro pb-2">
                 <div>
@@ -100,6 +142,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                 </div>
                 <div className="flex items-center gap-2">
                   {item.status === 'ready' ? (
+                    /* Producto listo: permite desmarcarlo */
                     <>
                       <Badge status="ready" />
                       <button
@@ -112,6 +155,7 @@ const PreparingOrder = ({ orderId, batch, tableNumber, clientName, prepaid, onMa
                       </button>
                     </>
                   ) : (
+                    /* Producto pendiente: permite marcarlo como listo */
                     <Button
                       variant="success"
                       onClick={() => handleMarkReady(item)}

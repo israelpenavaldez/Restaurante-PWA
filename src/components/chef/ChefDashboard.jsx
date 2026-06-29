@@ -11,10 +11,18 @@ import PreparingOrder from './PreparingOrder';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
+/**
+ * Panel de cocina.
+ * Muestra dos pestañas: lotes pendientes y lotes en preparación.
+ * Permite al cocinero iniciar la preparación de un lote, marcar productos
+ * como listos (con cantidad parcial si aplica) y desmarcarlos.
+ */
 const ChefDashboard = () => {
-  const [activeTab, setActiveTab] = useState('pending');
+  // ===== ESTADOS =====
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'preparing'
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -23,6 +31,9 @@ const ChefDashboard = () => {
   const { notify } = useNotification();
   const isOnline = useOnlineStatus();
 
+  // ===== SUSCRIPCIÓN A ÓRDENES EN TIEMPO REAL =====
+
+  /** Se suscribe a todas las órdenes de Firestore y las mantiene actualizadas. */
   useEffect(() => {
     const unsubscribe = subscribeToAllOrders((allOrders) => {
       setOrders(allOrders);
@@ -31,11 +42,18 @@ const ChefDashboard = () => {
     return () => unsubscribe();
   }, []);
 
+  /** Cierra la sesión del cocinero y redirige al login. */
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
+  // ===== PROCESAMIENTO DE LOTES =====
+
+  /**
+   * Aplana todos los lotes de todas las órdenes en un solo arreglo,
+   * agregando metadatos como orderId, tableNumber y clientName.
+   */
   const allBatches = orders.flatMap(order =>
     (order.batches || []).map(batch => ({
       orderId: order.id,
@@ -47,12 +65,21 @@ const ChefDashboard = () => {
     }))
   );
 
+  /** Lotes pendientes, ordenados del más antiguo al más reciente. */
   const pendingBatches = allBatches.filter(b => b.batch.status === 'pending');
   pendingBatches.sort((a, b) => a.batch.timestamp.toDate() - b.batch.timestamp.toDate());
 
+  /** Lotes en preparación, ordenados del más antiguo al más reciente. */
   const preparingBatches = allBatches.filter(b => b.batch.status === 'preparing');
   preparingBatches.sort((a, b) => a.batch.timestamp.toDate() - b.batch.timestamp.toDate());
 
+  // ===== OPERACIONES SOBRE LOTES Y PRODUCTOS =====
+
+  /**
+   * Cambia el estado de un lote de 'pending' a 'preparing'.
+   * @param {string} orderId - ID de la orden.
+   * @param {number} batchId - ID del lote dentro de la orden.
+   */
   const startPreparing = (orderId, batchId) => {
     withLock(async () => {
       try {
@@ -70,6 +97,15 @@ const ChefDashboard = () => {
     });
   };
 
+  /**
+   * Marca un producto (o parte de él) como listo.
+   * Si la cantidad a marcar es menor que la cantidad total, divide el producto
+   * en dos registros: uno listo y otro pendiente.
+   * @param {string} orderId - ID de la orden.
+   * @param {number} batchId - ID del lote.
+   * @param {number} itemId - ID del producto dentro del lote.
+   * @param {number} readyQuantity - Cantidad de unidades listas.
+   */
   const markItemReady = (orderId, batchId, itemId, readyQuantity) => {
     withLock(async () => {
       try {
@@ -81,6 +117,7 @@ const ChefDashboard = () => {
           if (batch.batchId !== batchId) return batch;
           const itemIndex = batch.items.findIndex(item => item.id === itemId);
           if (itemIndex === -1) return batch;
+
           const item = { ...batch.items[itemIndex] };
           const quantity = item.quantity || 1;
           const qtyToMark = Math.min(readyQuantity, quantity);
@@ -88,10 +125,12 @@ const ChefDashboard = () => {
 
           let updatedItems;
           if (qtyToMark === quantity) {
+            // Todas las unidades listas
             updatedItems = batch.items.map((it, idx) =>
               idx === itemIndex ? { ...it, status: 'ready' } : it
             );
           } else {
+            // División: una parte lista y el resto pendiente
             const readyItem = { ...item, id: Date.now(), quantity: qtyToMark, status: 'ready' };
             const pendingItem = { ...item, quantity: quantity - qtyToMark, status: 'pending' };
             updatedItems = [
@@ -103,6 +142,7 @@ const ChefDashboard = () => {
           }
           return { ...batch, items: updatedItems };
         });
+
         await updateOrder(orderId, { batches: updatedBatches });
       } catch (err) {
         notify(err.message, 'error');
@@ -111,6 +151,12 @@ const ChefDashboard = () => {
     });
   };
 
+  /**
+   * Revierte el estado de un producto de 'ready' a 'pending'.
+   * @param {string} orderId - ID de la orden.
+   * @param {number} batchId - ID del lote.
+   * @param {number} itemId - ID del producto.
+   */
   const unmarkItemReady = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
@@ -132,11 +178,13 @@ const ChefDashboard = () => {
     });
   };
 
+  // ===== RENDERIZADO =====
+
   if (loading) return <div className="text-center mt-10 text-texto-claro font-body">Cargando órdenes...</div>;
 
   return (
     <div className="min-h-screen bg-fondo">
-      {/* Header */}
+      {/* ===== CABECERA ===== */}
       <div className="bg-tarjeta shadow-md border-b border-borde-claro">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-display font-bold text-texto">Panel de Cocina</h1>
@@ -149,7 +197,7 @@ const ChefDashboard = () => {
         </div>
       </div>
 
-      {/* Pestañas */}
+      {/* ===== PESTAÑAS ===== */}
       <div className="border-b border-borde-claro bg-tarjeta">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex space-x-8">
@@ -177,7 +225,7 @@ const ChefDashboard = () => {
         </div>
       </div>
 
-      {/* Contenido */}
+      {/* ===== CONTENIDO DE LA PESTAÑA ACTIVA ===== */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {activeTab === 'pending' && (
           <PendingOrders

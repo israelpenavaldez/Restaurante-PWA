@@ -10,8 +10,15 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+/**
+ * Panel de reportes de ventas.
+ * Permite al administrador consultar métricas de ventas para un período
+ * (día, semana o mes), ver el análisis de productos más y menos vendidos,
+ * y exportar los resultados a Excel o PDF.
+ */
 const AdminReports = () => {
-  const [filter, setFilter] = useState('day');
+  // ===== ESTADOS DE FILTROS Y FECHAS =====
+  const [filter, setFilter] = useState('day');            // 'day' | 'week' | 'month'
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [selectedWeek, setSelectedWeek] = useState(() => {
     const now = new Date();
@@ -25,16 +32,29 @@ const AdminReports = () => {
   });
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+
+  // ===== ESTADOS DE DATOS =====
   const [allOrders, setAllOrders] = useState([]);
   const [validOrders, setValidOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [metrics, setMetrics] = useState({ totalSales: 0, totalOrders: 0, averageTicket: 0, averageServiceTime: 0, averageBatchTime: 0 });
+  const [metrics, setMetrics] = useState({
+    totalSales: 0,
+    totalOrders: 0,
+    averageTicket: 0,
+    averageServiceTime: 0,
+    averageBatchTime: 0
+  });
   const [topProducts, setTopProducts] = useState([]);
   const [bottomProducts, setBottomProducts] = useState([]);
-  const [productSortBy, setProductSortBy] = useState('quantity');
+  const [productSortBy, setProductSortBy] = useState('quantity'); // 'quantity' | 'total'
   const [showOrdersTable, setShowOrdersTable] = useState(false);
   const [menuCategories, setMenuCategories] = useState([]);
 
+  /**
+   * Calcula el número de semana del año para una fecha dada.
+   * @param {Date} d - Fecha de referencia.
+   * @returns {number} Número de semana (1-53).
+   */
   function getWeekNumber(d) {
     const date = new Date(d);
     date.setHours(0, 0, 0, 0);
@@ -42,6 +62,13 @@ const AdminReports = () => {
     const week1 = new Date(date.getFullYear(), 0, 4);
     return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
   }
+
+  /**
+   * Obtiene el rango de fechas (lunes a domingo) para una semana dada.
+   * @param {number} year - Año.
+   * @param {number} weekNumber - Número de semana.
+   * @returns {{ monday: Date, sunday: Date }}
+   */
   function getWeekRange(year, weekNumber) {
     const firstDay = new Date(year, 0, 1);
     const daysOffset = (firstDay.getDay() + 6) % 7;
@@ -53,6 +80,9 @@ const AdminReports = () => {
     return { monday, sunday };
   }
 
+  // ===== EFECTOS =====
+
+  /** Recalcula las fechas de inicio y fin cada vez que cambia el filtro o la selección. */
   useEffect(() => {
     let start, end;
     if (filter === 'day') {
@@ -73,8 +103,10 @@ const AdminReports = () => {
     setEndDate(end);
   }, [filter, selectedDate, selectedWeek, selectedMonth]);
 
+  /** Obtiene las órdenes del período y calcula todas las métricas. */
   useEffect(() => {
     if (!startDate || !endDate) return;
+
     const fetchOrders = async () => {
       setLoading(true);
       try {
@@ -91,10 +123,12 @@ const AdminReports = () => {
         setAllOrders(ordersData);
         setValidOrders(valid);
 
+        // Métricas de ventas y promedios
         const sales = valid.reduce((s, o) => s + o.realTotal, 0);
         const count = valid.length;
         const avgTicket = count > 0 ? sales / count : 0;
 
+        // Cálculo de tiempos promedio de servicio y lote
         let totalAvgTime = 0, ordersWithTime = 0, totalBatchMin = 0, totalBatches = 0;
         valid.forEach(order => {
           let sumBatch = 0, bc = 0;
@@ -113,6 +147,7 @@ const AdminReports = () => {
         const avgBatch = totalBatches > 0 ? totalBatchMin / totalBatches : 0;
         setMetrics({ totalSales: sales, totalOrders: count, averageTicket: avgTicket, averageServiceTime: avgService, averageBatchTime: avgBatch });
 
+        // Agrupación de productos vendidos
         const prodMap = new Map();
         valid.forEach(order => {
           order.batches?.forEach(batch => {
@@ -128,15 +163,24 @@ const AdminReports = () => {
             });
           });
         });
-        const sorted = Array.from(prodMap.values()).sort((a, b) => productSortBy === 'quantity' ? b.quantity - a.quantity : b.total - a.total);
+        const sorted = Array.from(prodMap.values()).sort((a, b) =>
+          productSortBy === 'quantity' ? b.quantity - a.quantity : b.total - a.total
+        );
         setTopProducts(sorted.slice(0, 5));
-        setBottomProducts([...sorted].sort((a, b) => productSortBy === 'quantity' ? a.quantity - b.quantity : a.total - b.total).slice(0, 5));
-      } catch (err) { console.error(err); }
-      finally { setLoading(false); }
+        setBottomProducts([...sorted].sort((a, b) =>
+          productSortBy === 'quantity' ? a.quantity - b.quantity : a.total - b.total
+        ).slice(0, 5));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
+
     fetchOrders();
   }, [startDate, endDate, filter, productSortBy]);
 
+  /** Carga las categorías del menú para usarlas en la descarga de cuentas individuales. */
   useEffect(() => {
     const loadCategories = async () => {
       const cats = await getMenuCategories();
@@ -145,6 +189,9 @@ const AdminReports = () => {
     loadCategories();
   }, []);
 
+  // ===== EXPORTACIONES =====
+
+  /** Exporta los datos de las órdenes del período a un archivo Excel. */
   const exportToExcel = () => {
     const data = allOrders.map(o => ({
       Cliente: o.clientName,
@@ -160,13 +207,17 @@ const AdminReports = () => {
     XLSX.writeFile(wb, `reporte_${filter}_${startDate?.toISOString().slice(0, 10)}.xlsx`);
   };
 
+  /** Exporta un informe completo en PDF con métricas, productos vendidos y no vendidos. */
   const exportToPDF = async () => {
+    // Obtener todos los productos del menú para identificar los no vendidos
     const menuSnap = await getDocs(collection(db, 'menuCategories'));
     const allMenu = [];
     menuSnap.forEach(doc => {
       const cat = doc.data().name;
       (doc.data().items || []).forEach(i => allMenu.push({ category: cat, name: i.name }));
     });
+
+    // Productos vendidos en el período
     const soldMap = new Map();
     validOrders.forEach(o => {
       o.batches?.forEach(b => {
@@ -184,6 +235,7 @@ const AdminReports = () => {
     const sold = Array.from(soldMap.values()).sort((a, b) => b.quantity - a.quantity);
     const unsold = allMenu.filter(mi => !soldMap.has(`${mi.category}::${mi.name}`));
 
+    // Construcción del PDF
     const doc = new jsPDF();
     doc.text(`Reporte - ${filter.toUpperCase()}`, 14, 10);
     doc.text(`Período: ${startDate?.toLocaleDateString()} - ${endDate?.toLocaleDateString()}`, 14, 20);
@@ -193,27 +245,52 @@ const AdminReports = () => {
     doc.text(`Tiempo promedio orden: ${metrics.averageServiceTime.toFixed(0)} min`, 14, 60);
     doc.text(`Tiempo promedio lote: ${metrics.averageBatchTime.toFixed(0)} min`, 14, 70);
 
+    // Tabla de órdenes
     let y = 80;
-    autoTable(doc, { startY: y, head: [['Cliente', 'Mesa', 'Creación', 'Pago', 'Total real']], body: allOrders.map(o => [o.clientName, o.tableNumber, o.createdAt?.toDate().toLocaleString(), o.completedAt?.toDate()?.toLocaleString() || '', `$${o.realTotal}`]) });
+    autoTable(doc, {
+      startY: y,
+      head: [['Cliente', 'Mesa', 'Creación', 'Pago', 'Total real']],
+      body: allOrders.map(o => [
+        o.clientName,
+        o.tableNumber,
+        o.createdAt?.toDate().toLocaleString(),
+        o.completedAt?.toDate()?.toLocaleString() || '',
+        `$${o.realTotal}`
+      ])
+    });
     y = doc.lastAutoTable.finalY + 10;
 
+    // Productos vendidos
     doc.text('Productos vendidos', 14, y);
     y += 6;
-    autoTable(doc, { startY: y, head: [['Categoría', 'Producto', 'Unidades', 'Total']], body: sold.map(p => [p.category, p.name, p.quantity, `$${p.total.toFixed(2)}`]) });
+    autoTable(doc, {
+      startY: y,
+      head: [['Categoría', 'Producto', 'Unidades', 'Total']],
+      body: sold.map(p => [p.category, p.name, p.quantity, `$${p.total.toFixed(2)}`])
+    });
     y = doc.lastAutoTable.finalY + 10;
 
+    // Productos no vendidos
     if (unsold.length) {
       doc.text('No vendidos', 14, y);
       y += 6;
-      autoTable(doc, { startY: y, head: [['Categoría', 'Producto']], body: unsold.map(p => [p.category, p.name]) });
+      autoTable(doc, {
+        startY: y,
+        head: [['Categoría', 'Producto']],
+        body: unsold.map(p => [p.category, p.name])
+      });
     }
+
     doc.save(`reporte_${filter}_${startDate?.toISOString().slice(0, 10)}.pdf`);
   };
+
+  // ===== RENDERIZADO =====
 
   if (loading) return <div className="text-center mt-10 text-texto-claro">Cargando reportes...</div>;
 
   return (
     <div>
+      {/* ===== CABECERA CON BOTONES DE EXPORTACIÓN ===== */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-display font-bold text-texto">Reportes de ventas</h2>
         <div className="flex gap-2">
@@ -222,6 +299,7 @@ const AdminReports = () => {
         </div>
       </div>
 
+      {/* ===== FILTROS DE PERÍODO ===== */}
       <Card className="mb-6">
         <div className="flex flex-wrap gap-4 items-end">
           <div>
@@ -232,7 +310,9 @@ const AdminReports = () => {
                   key={opt}
                   onClick={() => setFilter(opt)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-                    filter === opt ? 'bg-acento text-texto-inverso' : 'bg-tarjeta-alt/30 text-texto hover:bg-tarjeta-alt/50'
+                    filter === opt
+                      ? 'bg-acento text-texto-inverso'
+                      : 'bg-tarjeta-alt/30 text-texto hover:bg-tarjeta-alt/50'
                   }`}
                 >
                   {opt === 'day' ? 'Día' : opt === 'week' ? 'Semana' : 'Mes'}
@@ -244,9 +324,18 @@ const AdminReports = () => {
             <label className="block font-medium text-texto mb-1">
               {filter === 'day' ? 'Fecha' : filter === 'week' ? 'Inicio de semana' : 'Mes'}
             </label>
-            {filter === 'day' && <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />}
-            {filter === 'week' && <input type="week" value={selectedWeek} onChange={e => setSelectedWeek(e.target.value)} className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />}
-            {filter === 'month' && <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />}
+            {filter === 'day' && (
+              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+                className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />
+            )}
+            {filter === 'week' && (
+              <input type="week" value={selectedWeek} onChange={e => setSelectedWeek(e.target.value)}
+                className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />
+            )}
+            {filter === 'month' && (
+              <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
+                className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />
+            )}
           </div>
         </div>
         <p className="text-sm text-texto-claro mt-3">
@@ -254,6 +343,7 @@ const AdminReports = () => {
         </p>
       </Card>
 
+      {/* ===== TARJETAS DE MÉTRICAS PRINCIPALES ===== */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="text-center">
           <h3 className="text-texto-claro text-sm uppercase tracking-wide">Ventas totales</h3>
@@ -274,6 +364,7 @@ const AdminReports = () => {
         </Card>
       </div>
 
+      {/* ===== ANÁLISIS DE PRODUCTOS ===== */}
       <Card className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-texto">Análisis de productos</h3>
@@ -290,9 +381,12 @@ const AdminReports = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Más vendidos */}
           <div>
             <h4 className="font-medium text-texto-exito mb-2">Más vendidos</h4>
-            {topProducts.length === 0 ? <p className="text-texto-claro text-sm">No hay datos</p> :
+            {topProducts.length === 0 ? (
+              <p className="text-texto-claro text-sm">No hay datos</p>
+            ) : (
               <ul className="space-y-1">
                 {topProducts.map(p => (
                   <li key={`top-${p.category}-${p.name}`} className="flex justify-between text-sm border-b border-borde-claro pb-1">
@@ -301,11 +395,14 @@ const AdminReports = () => {
                   </li>
                 ))}
               </ul>
-            }
+            )}
           </div>
+          {/* Menos vendidos */}
           <div>
             <h4 className="font-medium text-acento mb-2">Menos vendidos</h4>
-            {bottomProducts.length === 0 ? <p className="text-texto-claro text-sm">No hay datos</p> :
+            {bottomProducts.length === 0 ? (
+              <p className="text-texto-claro text-sm">No hay datos</p>
+            ) : (
               <ul className="space-y-1">
                 {bottomProducts.map(p => (
                   <li key={`bottom-${p.category}-${p.name}`} className="flex justify-between text-sm border-b border-borde-claro pb-1">
@@ -314,15 +411,19 @@ const AdminReports = () => {
                   </li>
                 ))}
               </ul>
-            }
+            )}
           </div>
         </div>
       </Card>
 
+      {/* ===== TABLA DE ÓRDENES DEL PERÍODO ===== */}
       <Card>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-texto">Órdenes del período</h3>
-          <button onClick={() => setShowOrdersTable(!showOrdersTable)} className="text-acento hover:text-acento-hover font-medium text-sm transition">
+          <button
+            onClick={() => setShowOrdersTable(!showOrdersTable)}
+            className="text-acento hover:text-acento-hover font-medium text-sm transition"
+          >
             {showOrdersTable ? 'Ocultar' : 'Mostrar'} detalles
           </button>
         </div>
@@ -348,7 +449,10 @@ const AdminReports = () => {
                     <td className="px-4 py-2">{o.completedAt?.toDate()?.toLocaleString() || '-'}</td>
                     <td className="px-4 py-2">${o.realTotal}</td>
                     <td className="px-4 py-2">
-                      <button onClick={() => generateOrderPDF(o, menuCategories, 'final')} className="text-acento hover:text-acento-hover font-medium text-sm transition">
+                      <button
+                        onClick={() => generateOrderPDF(o, menuCategories, 'final')}
+                        className="text-acento hover:text-acento-hover font-medium text-sm transition"
+                      >
                         Descargar cuenta
                       </button>
                     </td>

@@ -1,4 +1,12 @@
-# Logs
+# ============================================================
+# .gitignore – Archivos y carpetas ignorados por Git
+# ============================================================
+# Este archivo indica a Git qué elementos no debe rastrear
+# ni incluir en el repositorio. Se excluyen dependencias,
+# archivos compilados, configuraciones locales y datos sensibles.
+
+# ===== LOGS =====
+# Archivos de registro generados por npm y otras herramientas
 logs
 *.log
 npm-debug.log*
@@ -7,25 +15,34 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ===== DEPENDENCIAS =====
+# Carpeta de módulos de Node.js (se regenera con npm install)
 node_modules
+
+# ===== COMPILACIÓN =====
+# Archivos generados por Vite al construir la aplicación
 dist
 dist-ssr
 
+# ===== VARIABLES DE ENTORNO =====
+# Archivos que contienen claves API y configuraciones sensibles
 .env
 .env.local
 *.local
 
-# Editor directories and files
+# ===== CONFIGURACIONES DE EDITORES =====
+# Archivos y carpetas específicos de entornos de desarrollo
 .vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+!.vscode/extensions.json    # Permitir el archivo de extensiones recomendadas
+.idea                        # Configuración de JetBrains IDEs
+.DS_Store                    # Archivo de índice de macOS
+*.suo                        # Opciones de usuario de Visual Studio
+*.ntvs*                      # Archivos de Visual Studio
+*.njsproj                    # Proyectos de Visual Studio
+*.sln                        # Soluciones de Visual Studio
+*.sw?                        # Archivos temporales de Vim
 
-# Firebase cache
+# ===== CACHÉ DE FIREBASE =====
+# Archivos temporales generados por Firebase CLI al desplegar
 .firebase/
 hosting.*.cache

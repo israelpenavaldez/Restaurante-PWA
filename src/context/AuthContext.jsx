@@ -9,10 +9,17 @@ import {
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
+// Contexto de autenticación
 const AuthContext = createContext();
 
+/** Hook personalizado para acceder al contexto de autenticación. */
 export const useAuth = () => useContext(AuthContext);
 
+/**
+ * Proveedor del contexto de autenticación.
+ * Envuelve la aplicación y proporciona funciones de registro, inicio de sesión,
+ * cierre de sesión, recuperación de contraseña y estado del servicio.
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -21,7 +28,19 @@ export const AuthProvider = ({ children }) => {
   const unsubscribeUserRef = useRef(null);
   const unsubscribeServiceRef = useRef(null);
 
-  // Registro con email y password
+  // ===== AUTENTICACIÓN =====
+
+  /**
+   * Registra un nuevo usuario con email y contraseña.
+   * Crea el documento en Firestore con role 'pending' y enabled false.
+   * Cierra sesión automáticamente para no iniciar sesión tras el registro.
+   *
+   * @param {string} email - Correo electrónico del nuevo usuario.
+   * @param {string} password - Contraseña (mínimo 6 caracteres).
+   * @param {string} displayName - Nombre completo del usuario.
+   * @returns {Promise<Object>} Usuario creado.
+   * @throws {Error} Con mensaje descriptivo si ocurre un error.
+   */
   const register = async (email, password, displayName) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -33,9 +52,10 @@ export const AuthProvider = ({ children }) => {
         enabled: false,
         createdAt: new Date().toISOString(),
       });
-      await signOut(auth);
+      await signOut(auth); // No iniciar sesión automáticamente
       return userCredential.user;
     } catch (error) {
+      // Traducción de errores comunes de Firebase
       if (error.code === 'auth/email-already-in-use') {
         throw new Error('Este correo ya está registrado.');
       } else if (error.code === 'auth/weak-password') {
@@ -50,7 +70,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login con email y password
+  /**
+   * Inicia sesión con email y contraseña.
+   *
+   * @param {string} email - Correo electrónico del usuario.
+   * @param {string} password - Contraseña del usuario.
+   * @returns {Promise<Object>} Credenciales del usuario.
+   * @throws {Error} Con mensaje descriptivo si ocurre un error.
+   */
   const login = async (email, password) => {
     try {
       return await signInWithEmailAndPassword(auth, email, password);
@@ -71,7 +98,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Cerrar sesión
+  /**
+   * Cierra la sesión del usuario actual.
+   * Limpia la suscripción a Firestore y los datos en caché.
+   */
   const logout = async () => {
     if (unsubscribeUserRef.current) {
       unsubscribeUserRef.current();
@@ -81,28 +111,44 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('cachedUserData');
   };
 
-  // Recuperar contraseña
+  /**
+   * Envía un correo de recuperación de contraseña.
+   *
+   * @param {string} email - Correo electrónico del usuario.
+   */
   const resetPassword = async (email) => {
     await sendPasswordResetEmail(auth, email);
   };
 
-  // Escuchar cambios en el usuario autenticado
+  // ===== OBSERVADORES DE ESTADO =====
+
+  /**
+   * Escucha cambios en la autenticación del usuario.
+   * Cuando el usuario cambia, se suscribe a su documento en Firestore
+   * para obtener sus datos en tiempo real.
+   */
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+
+      // Limpiar suscripción anterior
       if (unsubscribeUserRef.current) {
         unsubscribeUserRef.current();
         unsubscribeUserRef.current = null;
       }
+
       if (currentUser) {
         const userDocRef = doc(db, 'users', currentUser.uid);
         const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
             setUserData(data);
+            // Guardar en caché para uso offline
             try {
               sessionStorage.setItem('cachedUserData', JSON.stringify(data));
-            } catch (e) { /* ignorar */ }
+            } catch (e) {
+              /* ignorar errores de storage */
+            }
           } else {
             setUserData(null);
             sessionStorage.removeItem('cachedUserData');
@@ -121,7 +167,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // Suscripción al estado del servicio
+  /**
+   * Se suscribe al documento de configuración global del servicio
+   * para saber si el restaurante está abierto o cerrado.
+   */
   useEffect(() => {
     const configRef = doc(db, 'config', 'settings');
     const unsubscribe = onSnapshot(configRef, (docSnap) => {
@@ -134,6 +183,8 @@ export const AuthProvider = ({ children }) => {
     unsubscribeServiceRef.current = unsubscribe;
     return () => unsubscribe();
   }, []);
+
+  // ===== VALOR DEL CONTEXTO =====
 
   const value = {
     user,

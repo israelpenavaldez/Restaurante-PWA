@@ -11,6 +11,12 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
+/**
+ * Vista de detalle de una mesa ocupada.
+ * Muestra todas las órdenes activas con sus lotes y productos,
+ * permitiendo al mesero entregar productos, cancelarlos,
+ * agregar nuevos productos o clientes, generar cuentas y liberar la mesa.
+ */
 const ViewTable = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
@@ -24,6 +30,10 @@ const ViewTable = () => {
   const { withLock, isLocked } = useActionLock();
   const { notify, confirm, prompt } = useNotification();
 
+  /**
+   * Obtiene el número real de la mesa desde Firestore.
+   * Si no se encuentra, redirige al panel principal.
+   */
   useEffect(() => {
     const fetchTableNumber = async () => {
       const tableDoc = await getDoc(doc(db, 'tables', tableId));
@@ -37,6 +47,10 @@ const ViewTable = () => {
     fetchTableNumber();
   }, [tableId, navigate]);
 
+  /**
+   * Se suscribe a las órdenes de la mesa en tiempo real.
+   * Filtra solo las órdenes activas (no completadas ni pagadas).
+   */
   useEffect(() => {
     if (realTableNumber === null) return;
     const unsubscribe = subscribeToTableOrders(realTableNumber, (allOrders) => {
@@ -47,7 +61,15 @@ const ViewTable = () => {
     return () => unsubscribe();
   }, [realTableNumber]);
 
-  // Entregar un producto (ahora con confirmación)
+  // ===== OPERACIONES SOBRE PRODUCTOS =====
+
+  /**
+   * Marca un producto como entregado.
+   * Solicita confirmación al mesero antes de ejecutar la acción.
+   * Si todos los productos del lote están entregados o cancelados,
+   * el lote se marca automáticamente como entregado.
+   * Si todos los lotes están entregados, la orden se marca como entregada.
+   */
   const handleDeliverItem = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
@@ -71,11 +93,14 @@ const ViewTable = () => {
         });
 
         const updatedBatch = updatedBatches.find(b => b.batchId === batchId);
-        const allItemsInBatchDelivered = updatedBatch.items.every(item => item.status === 'delivered' || item.status === 'cancelled');
+        const allItemsInBatchDelivered = updatedBatch.items.every(
+          item => item.status === 'delivered' || item.status === 'cancelled'
+        );
         if (allItemsInBatchDelivered && updatedBatch.status !== 'delivered') {
           updatedBatch.status = 'delivered';
           updatedBatch.deliveredAt = Timestamp.now();
         }
+
         const allBatchesDelivered = updatedBatches.every(batch => batch.status === 'delivered');
         let updatedOrderStatus = order.status;
         let deliveredAt = order.deliveredAt;
@@ -83,6 +108,7 @@ const ViewTable = () => {
           updatedOrderStatus = 'delivered';
           if (!deliveredAt) deliveredAt = Timestamp.now();
         }
+
         await updateOrder(orderId, { batches: updatedBatches, status: updatedOrderStatus, deliveredAt });
       } catch (err) {
         notify(err.message, 'error');
@@ -91,7 +117,13 @@ const ViewTable = () => {
     });
   };
 
-  // Cancelar un producto (ahora permite cancelar también si está 'ready', con confirmación)
+  /**
+   * Cancela un producto (pendiente o listo).
+   * Si la cantidad es mayor a 1, pregunta cuántas unidades cancelar.
+   * No permite cancelar productos en órdenes con pago anticipado.
+   * Si todos los productos del lote quedan entregados o cancelados,
+   * el lote se marca como entregado automáticamente.
+   */
   const handleCancelItem = (orderId, batchId, itemId) => {
     withLock(async () => {
       try {
@@ -101,6 +133,7 @@ const ViewTable = () => {
           notify('No se pueden cancelar productos en una orden prepagada', 'warning');
           return;
         }
+
         const batch = order.batches.find(b => b.batchId === batchId);
         const item = batch?.items.find(i => i.id === itemId);
         if (!item || (item.status !== 'pending' && item.status !== 'ready')) return;
@@ -110,7 +143,10 @@ const ViewTable = () => {
 
         let quantityToCancel = item.quantity;
         if (item.quantity > 1) {
-          const input = await prompt(`¿Cuántas unidades de "${item.name}" cancelar? (1-${item.quantity})`, '1');
+          const input = await prompt(
+            `¿Cuántas unidades de "${item.name}" cancelar? (1-${item.quantity})`,
+            '1'
+          );
           if (!input) return;
           const qty = parseInt(input);
           if (isNaN(qty) || qty < 1 || qty > item.quantity) {
@@ -122,10 +158,12 @@ const ViewTable = () => {
 
         let updatedItems;
         if (quantityToCancel === item.quantity) {
+          // Cancelar todas las unidades
           updatedItems = batch.items.map(i =>
             i.id === itemId ? { ...i, status: 'cancelled', cancelledAt: Timestamp.now() } : i
           );
         } else {
+          // Cancelar solo una parte: dividir el producto
           const remaining = { ...item, quantity: item.quantity - quantityToCancel, status: 'pending' };
           const cancelled = { ...item, id: Date.now(), quantity: quantityToCancel, status: 'cancelled', cancelledAt: Timestamp.now() };
           updatedItems = batch.items.filter(i => i.id !== itemId);
@@ -135,11 +173,15 @@ const ViewTable = () => {
         const updatedBatches = order.batches.map(b =>
           b.batchId === batchId ? { ...b, items: updatedItems } : b
         );
+
         const updatedBatch = updatedBatches.find(b => b.batchId === batchId);
-        const allItemsCompleted = updatedBatch.items.every(i => i.status === 'delivered' || i.status === 'cancelled');
+        const allItemsCompleted = updatedBatch.items.every(
+          i => i.status === 'delivered' || i.status === 'cancelled'
+        );
         if (allItemsCompleted && updatedBatch.status !== 'delivered') {
           updatedBatch.status = 'delivered';
         }
+
         const allBatchesCompleted = updatedBatches.every(b => b.status === 'delivered');
         let updatedOrderStatus = order.status;
         let deliveredAt = order.deliveredAt;
@@ -147,6 +189,7 @@ const ViewTable = () => {
           updatedOrderStatus = 'delivered';
           if (!deliveredAt) deliveredAt = Timestamp.now();
         }
+
         await updateOrder(orderId, { batches: updatedBatches, status: updatedOrderStatus, deliveredAt });
       } catch (err) {
         notify(err.message, 'error');
@@ -155,6 +198,9 @@ const ViewTable = () => {
     });
   };
 
+  // ===== NAVEGACIÓN A OTRAS VISTAS =====
+
+  /** Navega a la vista de generación de cuenta para una orden específica. */
   const goToBill = (orderId, type) => {
     try {
       checkWaiter();
@@ -165,7 +211,7 @@ const ViewTable = () => {
     }
   };
 
-  // Cerrar cuenta (con confirmación)
+  /** Cierra una cuenta y la marca como pagada (con confirmación). */
   const handleCloseOrder = (orderId) => {
     withLock(async () => {
       try {
@@ -180,6 +226,7 @@ const ViewTable = () => {
     });
   };
 
+  /** Libera la mesa, dejándola disponible nuevamente (con confirmación). */
   const liberarMesa = () => {
     withLock(async () => {
       try {
@@ -199,6 +246,7 @@ const ViewTable = () => {
     });
   };
 
+  /** Navega a la vista para agregar un nuevo lote de productos a una orden. */
   const goToAddProduct = (orderId) => {
     try {
       checkWaiter();
@@ -209,6 +257,7 @@ const ViewTable = () => {
     }
   };
 
+  /** Navega a la vista para agregar un nuevo cliente a la mesa. */
   const goToAddClient = () => {
     try {
       checkWaiter();
@@ -219,16 +268,23 @@ const ViewTable = () => {
     }
   };
 
+  /**
+   * Verifica si todos los productos de una orden están
+   * en estado entregado o cancelado.
+   */
   const allItemsFinalized = (order) => {
     return order.batches.every(batch =>
       batch.items.every(item => item.status === 'delivered' || item.status === 'cancelled')
     );
   };
 
+  // ===== RENDERIZADO =====
+
   if (loading || realTableNumber === null) {
     return <div className="text-center mt-10 text-texto-claro">Cargando órdenes...</div>;
   }
 
+  // Caso: no hay órdenes activas (todas están pagadas o completadas)
   if (orders.length === 0) {
     return (
       <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
@@ -249,18 +305,25 @@ const ViewTable = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
+      {/* ===== BOTÓN VOLVER ===== */}
       <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
       </button>
+
       <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa: {realTableNumber} - Órdenes</h2>
 
+      {/* ===== LISTA DE ÓRDENES ===== */}
       {orders.map(order => {
         const isPrepaid = order.prepaid === true;
         const allFinalized = allItemsFinalized(order);
+
         return (
           <Card key={order.id} className="mb-6">
+            {/* Cabecera de la orden */}
             <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
               <h3 className="text-2xl font-display font-bold text-texto">{order.clientName}</h3>
+
+              {/* Botones de acción según estado */}
               <div className="flex flex-wrap gap-2">
                 {!isPrepaid && (
                   <Button variant="secondary" onClick={() => goToAddProduct(order.id)} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
@@ -289,11 +352,15 @@ const ViewTable = () => {
               </div>
             </div>
 
+            {/* ===== LOTES DE LA ORDEN ===== */}
             {order.batches.map(batch => (
               <div key={batch.batchId} className="mb-4 border-2 border-dashed border-borde rounded-xl p-3">
+                {/* Cabecera del lote */}
                 <div className="bg-tarjeta-alt/20 rounded-lg p-2 text-sm font-medium mb-2 flex justify-between items-center">
                   <span>Lote #{batch.batchId} - {batch.timestamp?.toDate().toLocaleTimeString()}</span>
                 </div>
+
+                {/* Tabla de productos del lote */}
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-borde-claro">
                     <thead className="bg-tarjeta-alt/10">
@@ -310,6 +377,7 @@ const ViewTable = () => {
                         let rowClass = '';
                         if (item.status === 'delivered') rowClass = 'text-texto-claro line-through';
                         if (item.status === 'cancelled') rowClass = 'text-insignia-cancelado-texto line-through';
+
                         return (
                           <tr key={item.id} className={rowClass}>
                             <td className="px-2 py-1">
@@ -323,6 +391,7 @@ const ViewTable = () => {
                             </td>
                             <td className="px-2 py-1">
                               <div className="flex flex-wrap gap-2">
+                                {/* Botón Entregar (solo para productos listos) */}
                                 {item.status === 'ready' && (
                                   <button
                                     onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)}
@@ -332,6 +401,7 @@ const ViewTable = () => {
                                     Entregar
                                   </button>
                                 )}
+                                {/* Botón Cancelar (para productos pendientes o listos, excepto prepagados) */}
                                 {(item.status === 'pending' || item.status === 'ready') && !isPrepaid && (
                                   <button
                                     onClick={() => handleCancelItem(order.id, batch.batchId, item.id)}
@@ -355,6 +425,7 @@ const ViewTable = () => {
         );
       })}
 
+      {/* ===== BOTÓN PARA AGREGAR NUEVO CLIENTE ===== */}
       <div className="flex justify-end mt-4">
         <Button variant="primary" onClick={goToAddClient} disabled={isLocked || !isOnline}>
           + Nueva orden (Cliente)
