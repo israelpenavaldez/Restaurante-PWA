@@ -6,6 +6,7 @@ import { getMenuCategories } from '../../services/firestoreService';
 import { useNotification } from '../../context/NotificationContext';
 import { getProductCategory, groupItemsForDisplay } from '../../utils/helpers';
 import { generateOrderPDF } from '../../utils/pdfHelpers';
+import { generateTicketHTML } from '../../utils/ticketHelpers';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useActionLock } from '../../hooks/useActionLock';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
@@ -32,6 +33,7 @@ const GenerateBill = () => {
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState(''); // 'efectivo' | 'transferencia'
   const [isPaid, setIsPaid] = useState(false);           // controla el estado post‑pago
+  const [setShowPreview] = useState(false);
 
   const { checkWaiter } = usePermissions();
   const { withLock, isLocked } = useActionLock();
@@ -154,6 +156,20 @@ const GenerateBill = () => {
   /** Genera y descarga el comprobante PDF de la cuenta. */
   const handleDownloadPDF = () => {
     generateOrderPDF(order, categories, billType, paymentMethod);
+  };
+  
+  /** Permite imprimir y mostrar la vista previa del comprobante. */
+  const handlePrint = () => {
+    const html = generateTicketHTML(order, paymentMethod);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  };
+  const handlePreview = () => {
+    setShowPreview(true);
   };
 
   /**
@@ -315,6 +331,9 @@ const GenerateBill = () => {
           <>
             <Button variant="secondary" onClick={handleDownloadPDF}>
               Descargar comprobante
+            </Button>
+            <Button variant="secondary" onClick={handlePrint}>
+              Imprimir ticket
             </Button>
             <Button variant="primary" onClick={handleExit}>
               Salir
