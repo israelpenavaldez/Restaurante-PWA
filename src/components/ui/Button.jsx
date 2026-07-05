@@ -26,7 +26,7 @@ export default function Button({
 
   return (
     <button
-      className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant] || variants.primary} ${className}`}
+      className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 active:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant] || variants.primary} ${className}`}
       {...props}
     >
       {children}

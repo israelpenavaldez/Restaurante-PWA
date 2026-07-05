@@ -86,7 +86,7 @@ const PendingOrders = ({ batches, onStartPreparing, isLocked }) => {
 
             {/* Botón para iniciar preparación */}
             <Button
-              variant="primary"
+              variant="success"
               onClick={() => handlePrepare(batch.orderId, batch.batch.batchId)}
               disabled={isLocked || !isOnline}
               className="w-full"

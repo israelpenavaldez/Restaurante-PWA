@@ -75,23 +75,24 @@ const TablesTab = ({ onOccupy, onView }) => {
       {tables.map((table) => (
         <Card key={table.id} className="border-l-4 border-acento flex flex-col">
           {/* Número de mesa */}
-          <h3 className="text-2xl font-display font-bold text-texto mb-1">
-            Mesa: {table.number}
+          <h3 className="text-center text-2xl font-display font-bold text-texto mb-1 flex flex-col items-center">
+            <span>Mesa</span>
+            <span className="text-acento">{table.number}</span>
           </h3>
 
           {/* Descripción de la mesa (si existe) */}
           {table.description && (
-            <p className="text-sm text-texto-claro mb-2">{table.description}</p>
+            <p className="text-center text-sm text-texto-claro mb-2">{table.description}</p>
           )}
 
           {/* Estado de la mesa */}
-          <p className={`mb-4 font-semibold ${table.status === 'occupied' ? 'text-acento' : 'text-texto-exito'}`}>
+          <p className={`text-center mb-4 font-semibold ${table.status === 'occupied' ? 'text-acento' : 'text-texto-exito'}`}>
             {table.status === 'occupied' ? 'Ocupada' : 'Libre'}
           </p>
 
           {table.status === 'free' ? (
             /* Mesa libre: botón para atender */
-            <Button variant="primary" onClick={() => onOccupy(table.id)} className="w-full mt-auto">
+            <Button variant="success" onClick={() => onOccupy(table.id)} className="w-full mt-auto">
               Atender
             </Button>
           ) : (
@@ -112,7 +113,7 @@ const TablesTab = ({ onOccupy, onView }) => {
               </div>
 
               {/* Botón para revisar la mesa */}
-              <Button variant="secondary" onClick={() => onView(table.id)} className="w-full">
+              <Button variant="primary" onClick={() => onView(table.id)} className="w-full">
                 Revisar
               </Button>
             </div>

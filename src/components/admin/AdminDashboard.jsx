@@ -52,11 +52,11 @@ const AdminDashboard = () => {
       {/* ===== CABECERA ===== */}
       <div className="bg-tarjeta shadow-md border-b border-borde-claro">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="py-4">
             <h1 className="text-2xl font-display font-bold text-texto">
               Panel de Administrador
             </h1>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-end space-x-4 mt-1">
               <span className="text-texto-claro font-medium">
                 {userData?.displayName || userData?.email}
               </span>

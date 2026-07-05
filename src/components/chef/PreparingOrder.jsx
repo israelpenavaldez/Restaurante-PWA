@@ -88,7 +88,7 @@ const PreparingOrder = ({
             {/* Etiqueta visible si la orden fue prepagada */}
             {prepaid && (
               <span className="inline-block mt-2 text-xs bg-boton-aviso/20 text-insignia-pendiente-texto px-3 py-1 rounded-full font-medium">
-                Prepagado
+                Pagado
               </span>
             )}
           </div>

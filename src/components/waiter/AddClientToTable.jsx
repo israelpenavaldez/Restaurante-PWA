@@ -233,6 +233,7 @@ const AddClientToTable = () => {
             </div>
 
             <h4 className="font-display font-bold text-texto">{product.name}</h4>
+            <h3 className="text-texto-claro text-sm mb-1">{product.description}</h3>
             <p className="text-texto-aviso font-bold text-lg mb-2">${product.price}</p>
 
             {/* Campos de cantidad, notas y botón Agregar */}
