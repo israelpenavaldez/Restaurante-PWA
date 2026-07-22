@@ -100,12 +100,6 @@ const GenerateBill = () => {
       try {
         checkWaiter();
 
-        // Validar que se haya seleccionado un método de pago
-        if (!paymentMethod) {
-          notify('Selecciona un método de pago', 'warning');
-          return;
-        }
-
         const mensaje = billType === 'prepay'
           ? '¿Registrar pago anticipado?'
           : '¿Confirmar pago de la cuenta?';
@@ -218,9 +212,9 @@ const GenerateBill = () => {
   return (
     <div className="max-w-3xl mx-auto p-4 bg-fondo min-h-screen">
       {/* ===== BOTÓN VOLVER ===== */}
-      <button onClick={() => navigate(`/view/${tableId}`)} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
+      <Button variant="primary" onClick={() => navigate(`/view/${tableId}`)} className="font-medium mb-4 inline-flex items-center gap-1">
         ← Volver
-      </button>
+      </Button>
 
       {/* ===== CABECERA DE LA CUENTA ===== */}
       <Card className="text-center mb-6 border-b-4 border-borde">
@@ -233,14 +227,14 @@ const GenerateBill = () => {
 
       {/* ===== SELECTOR DE MÉTODO DE PAGO ===== */}
       <div className="mb-6">
-        <label className="block font-medium text-texto mb-2">Método de pago</label>
+        <label className="block font-medium text-texto mb-2">Método de pago (opcional)</label>
         <select
           value={paymentMethod}
           onChange={(e) => setPaymentMethod(e.target.value)}
           className="w-full p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition"
           disabled={isPaid}
         >
-          <option value="">Seleccione un método</option>
+          <option value=""> - - -</option>
           <option value="efectivo">Efectivo</option>
           <option value="transferencia">Transferencia</option>
         </select>
@@ -321,7 +315,7 @@ const GenerateBill = () => {
           <Button
             variant="success"
             onClick={handleConfirm}
-            disabled={isLocked || !isOnline || !paymentMethod}
+            disabled={isLocked || !isOnline}
             className="px-8 py-3 text-lg"
           >
             {isLocked ? 'Procesando...' : (billType === 'prepay' ? 'Confirmar pago anticipado' : 'Confirmar pago')}
@@ -329,10 +323,10 @@ const GenerateBill = () => {
         ) : (
           /* Estado post‑pago: descarga y salida */
           <>
-            <Button variant="secondary" onClick={handleDownloadPDF}>
+            <Button variant="warning" onClick={handleDownloadPDF}>
               Descargar comprobante
             </Button>
-            <Button variant="secondary" onClick={handlePrint}>
+            <Button variant="success" onClick={handlePrint}>
               Imprimir ticket
             </Button>
             <Button variant="primary" onClick={handleExit}>

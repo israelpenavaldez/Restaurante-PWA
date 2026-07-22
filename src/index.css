@@ -22,16 +22,16 @@
   --color-texto-exito-hover: #1B5E20; /* Hover del texto de éxito */
   --color-texto-aviso: #C62828;       /* Texto para advertencia */
   --color-texto-aviso-hover: #AD1F1F; /* Hover del texto de aviso */
-  --color-texto-advertencia: #E0A030;        /* Texto para advertencias (ej. botón Deshacer) */
+  --color-texto-advertencia: #E0A030;        /* Texto para advertencias */
   --color-texto-advertencia-hover: #C98B20;  /* Hover del texto de advertencia */
 
   /* ===== BOTONES ===== */
-  --color-boton-primario: #C15B3D;            /* Fondo botón primario */
-  --color-boton-primario-hover: #A84A30;      /* Hover botón primario */
+  --color-boton-primario: #2B5B84;            /* Fondo botón primario */
+  --color-boton-primario-hover: #1F4566;      /* Hover botón primario */
   --color-boton-primario-texto: #FFFFFF;      /* Texto botón primario */
 
-  --color-boton-secundario: #D9C4B0;          /* Fondo botón secundario */
-  --color-boton-secundario-hover: #C4AF9B;    /* Hover botón secundario */
+  --color-boton-secundario: #E69A3B;          /* Fondo botón secundario */
+  --color-boton-secundario-hover: #D48A2B;    /* Hover botón secundario */
   --color-boton-secundario-texto: #3C2A1E;    /* Texto botón secundario */
 
   --color-boton-exito: #557A45;               /* Fondo botón éxito */
@@ -42,18 +42,27 @@
   --color-boton-aviso-hover: #C98B20;         /* Hover botón advertencia */
   --color-boton-aviso-texto: #3C2A1E;         /* Texto botón advertencia */
 
-  --color-boton-eliminar: #7A6555;            /* Fondo para botón de quitar/eliminar */
+  --color-boton-cancelar: #A84328;            /* Fondo para botón de cancelar */
+  --color-boton-cancelar-hover: #8C351E;      /* Hover para botón de cancelar */
+  --color-boton-cancelar-texto: #FFFFFF;      /* Texto para botón de cancelar */
+
+  --color-boton-eliminar: #000000;            /* Fondo para botón de quitar/eliminar */
+  --color-boton-eliminar-hover: #121212;      /* Hover para botón de quitar/eliminar */
   --color-boton-eliminar-texto: #FFFFFF;      /* Texto para botón de quitar/eliminar */
 
+  --color-boton-regresar: #FFFFFF;             /* Fondo para botón de regresar */
+  --color-boton-regresar-hover: #F5F5F5;       /* Hover para botón de regresar */ 
+  --color-boton-regresar-texto: #333333;       /* Texto para botón de regresar */
+
   /* ===== INSIGNIAS (BADGES) ===== */
-  --color-insignia-pendiente-fondo: #FFF4E5;
-  --color-insignia-pendiente-texto: #B85C00;
-  --color-insignia-listo-fondo: #E8F0E5;
-  --color-insignia-listo-texto: #2E5A2E;
-  --color-insignia-entregado-fondo: #EEF0F1;
-  --color-insignia-entregado-texto: #4B5A5E;
-  --color-insignia-cancelado-fondo: #FDE8E8;
-  --color-insignia-cancelado-texto: #A81818;
+  --color-insignia-pendiente-fondo: #3C2A1E;
+  --color-insignia-pendiente-texto: #E0A030;
+  --color-insignia-listo-fondo: #FFFFFF;
+  --color-insignia-listo-texto: #2B5B84;
+  --color-insignia-entregado-fondo: #FFFFFF;
+  --color-insignia-entregado-texto: #557A45;
+  --color-insignia-cancelado-fondo: #FFFFFF;
+  --color-insignia-cancelado-texto: #A84328;
 
   /* ===== TOASTS (notificaciones emergentes) ===== */
   --color-aviso-exito-fondo: #557A45;
@@ -89,4 +98,12 @@ body {
 }
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
 }

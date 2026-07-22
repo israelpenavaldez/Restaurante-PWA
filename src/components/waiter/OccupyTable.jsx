@@ -265,9 +265,12 @@ const OccupyTable = () => {
   return (
     <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
       {/* ===== BOTÓN VOLVER ===== */}
-      <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
-        ← Volver
-      </button>
+      <Button 
+        variant="return"
+        onClick={() => navigate('/dashboard')} 
+        className= "mb-6">
+          ←
+      </Button>
 
       <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa: {realTableNumber}</h2>
 
@@ -300,7 +303,7 @@ const OccupyTable = () => {
           onClick={handleAddClient}
           className="bg-boton-exito hover:bg-boton-exito-hover text-boton-exito-texto px-4 py-2 rounded-full font-semibold transition"
         >
-          + Nueva orden
+          + Orden adicional
         </button>
       </div>
 
@@ -410,9 +413,15 @@ const OccupyTable = () => {
                   {group.name} x{group.quantity} - <span className="text-texto-aviso font-bold">${group.price * group.quantity}</span>
                 </span>
                 {group.notes && <span className="text-texto-claro text-sm ml-2">({group.notes})</span>}
-                <button onClick={() => removeOrders(activeClient.id, group.ids)} className="text-acento hover:text-acento-hover text-sm font-medium">
-                  Eliminar
-                </button>
+                <Button
+                  variant="cancel"
+                  onClick={() => removeOrders(activeClient.id, group.ids)} 
+                  className="text-sm py-1 px-2">
+                    {/* Ícono de X */}
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                </Button>
               </li>
             ))}
           </ul>
@@ -421,8 +430,12 @@ const OccupyTable = () => {
 
       {/* ===== BOTÓN ENVIAR A COCINA ===== */}
       <div className="flex justify-end">
-        <Button variant="success" onClick={handleSubmit} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
-          {isLocked ? 'Enviando...' : 'Enviar a cocina'}
+        <Button 
+          variant="success" 
+          onClick={handleSubmit} 
+          disabled={isLocked || !isOnline} 
+          className="px-8 py-3 text-lg">
+            {isLocked ? 'Enviando...' : 'Enviar a cocina'}
         </Button>
       </div>
     </div>

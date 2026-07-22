@@ -20,8 +20,11 @@ export default function Button({
   const variants = {
     primary: 'bg-boton-primario hover:bg-boton-primario-hover text-boton-primario-texto',
     secondary: 'bg-boton-secundario hover:bg-boton-secundario-hover text-boton-secundario-texto',
+    cancel: 'bg-boton-cancelar hover:bg-boton-cancelar-hover text-boton-cancelar-texto',
     success: 'bg-boton-exito hover:bg-boton-exito-hover text-boton-exito-texto',
     warning: 'bg-boton-aviso hover:bg-boton-aviso-hover text-boton-aviso-texto',
+    delete: 'bg-boton-eliminar hover:bg-boton-eliminar-hover text-boton-eliminar-texto',
+    return: 'bg-boton-regresar hover:bg-boton-regresar-hover text-boton-regresar-texto',
   };
 
   return (

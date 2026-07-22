@@ -16,7 +16,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel }) {
       <div className="bg-tarjeta rounded-2xl shadow-2xl p-6 max-w-sm w-full border border-borde-claro">
         <p className="text-texto text-lg mb-6 text-center">{message}</p>
         <div className="flex justify-center gap-3">
-          <Button variant="primary" onClick={onCancel}>No</Button>
+          <Button variant="cancel" onClick={onCancel}>No</Button>
           <Button variant="success" onClick={onConfirm}>Si</Button>
         </div>
       </div>

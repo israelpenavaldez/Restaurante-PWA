@@ -288,14 +288,22 @@ const ViewTable = () => {
   if (orders.length === 0) {
     return (
       <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
-        <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
+        <Button
+          variant="return" 
+          onClick={() => navigate('/dashboard')} 
+          className="mb-4 inline-flex items-center gap-1"
+        >
           ← Volver
-        </button>
+        </Button>
         <Card className="text-center p-8">
           <p className="text-texto-claro text-lg">No hay órdenes activas para esta mesa.</p>
         </Card>
         <div className="flex justify-center mt-8">
-          <Button variant="primary" onClick={liberarMesa} disabled={isLocked || !isOnline}>
+          <Button 
+            variant="success" 
+            onClick={liberarMesa} 
+            disabled={isLocked || !isOnline}
+          >
             {isLocked ? 'Procesando...' : 'Liberar mesa'}
           </Button>
         </div>
@@ -306,11 +314,15 @@ const ViewTable = () => {
   return (
     <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
       {/* ===== BOTÓN VOLVER ===== */}
-      <button onClick={() => navigate('/dashboard')} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
+      <Button
+        variant="return"
+        onClick={() => navigate('/dashboard')}
+        className="mb-4 inline-flex items-center gap-1"
+      >
         ← Volver
-      </button>
+      </Button>
 
-      <h2 className="text-3xl font-display font-bold text-texto mb-6">Mesa: {realTableNumber} - Órdenes</h2>
+      <h2 className="text-3xl font-display font-bold text-texto text-center mb-6">Mesa: {realTableNumber}</h2>
 
       {/* ===== LISTA DE ÓRDENES ===== */}
       {orders.map(order => {
@@ -320,36 +332,55 @@ const ViewTable = () => {
         return (
           <Card key={order.id} className="mb-6">
             {/* Cabecera de la orden */}
-            <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
-              <h3 className="text-2xl font-display font-bold text-texto">{order.clientName}</h3>
-
-              {/* Botones de acción según estado */}
-              <div className="flex flex-wrap gap-2">
-                {!isPrepaid && (
-                  <Button variant="secondary" onClick={() => goToAddProduct(order.id)} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
-                    Agregar producto
+            <div className="flex justify-start items-center mb-4">
+              <h3 className="text-2xl font-display font-bold text-texto">Cliente: {order.clientName}</h3>
+            </div>
+            {/* Botones de acción según estado */}
+            <div className="flex flex-wrap justify-between gap-2 mb-4">
+              {!isPrepaid && (
+                <Button 
+                  variant="success" 
+                  onClick={() => goToAddProduct(order.id)} 
+                  disabled={isLocked || !isOnline} 
+                  className="text-sm py-1 px-3"
+                >
+                  Agregar
+                </Button>
+              )}
+              {!isPrepaid ? (
+                allFinalized ? (
+                  <Button 
+                    variant="success" 
+                    onClick={() => goToBill(order.id, 'final')} 
+                    disabled={isLocked || !isOnline} 
+                    className="text-sm py-1 px-3"
+                  >
+                    Generar cuenta
                   </Button>
-                )}
-                {!isPrepaid ? (
-                  allFinalized ? (
-                    <Button variant="success" onClick={() => goToBill(order.id, 'final')} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
-                      Generar cuenta
-                    </Button>
-                  ) : (
-                    <Button variant="warning" onClick={() => goToBill(order.id, 'prepay')} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
-                      Pago anticipado
-                    </Button>
-                  )
                 ) : (
-                  allFinalized ? (
-                    <Button variant="success" onClick={() => handleCloseOrder(order.id)} disabled={isLocked || !isOnline} className="text-sm py-1 px-3">
-                      Cerrar cuenta
-                    </Button>
-                  ) : (
-                    <span className="text-texto-claro italic self-center">Pagado por anticipado</span>
-                  )
-                )}
-              </div>
+                  <Button 
+                    variant="warning" 
+                    onClick={() => goToBill(order.id, 'prepay')} 
+                    disabled={isLocked || !isOnline} 
+                    className="text-sm py-1 px-3"
+                  >
+                    Pago anticipado
+                  </Button>
+                )
+              ) : (
+                allFinalized ? (
+                  <Button 
+                    variant="success" 
+                    onClick={() => handleCloseOrder(order.id)} 
+                    disabled={isLocked || !isOnline} 
+                    className="text-sm py-1 px-3"
+                  >
+                    Cerrar cuenta
+                  </Button>
+                ) : (
+                  <span className="text-texto-claro italic self-center">---Pagado---</span>
+                )
+              )}
             </div>
 
             {/* ===== LOTES DE LA ORDEN ===== */}
@@ -357,21 +388,18 @@ const ViewTable = () => {
               <div key={batch.batchId} className="mb-4 border-2 border-dashed border-borde rounded-xl p-3">
                 {/* Cabecera del lote */}
                 <div className="bg-tarjeta-alt/20 rounded-lg p-2 text-sm font-medium mb-2 flex justify-between items-center">
-                  <span>Lote #{batch.batchId} - {batch.timestamp?.toDate().toLocaleTimeString()}</span>
+                  <span>#{batch.batchId} - {batch.timestamp?.toDate().toLocaleTimeString()}</span>
                 </div>
 
                 {/* Tabla de productos del lote */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-borde-claro">
-                    <thead className="bg-tarjeta-alt/10">
-                      <tr>
-                        <th className="px-2 py-1 text-left text-texto">Producto</th>
-                        <th className="px-2 py-1 text-left text-texto">Cant.</th>
-                        <th className="px-2 py-1 text-left text-texto">Precio</th>
-                        <th className="px-2 py-1 text-left text-texto">Estado</th>
-                        <th className="px-2 py-1 text-left text-texto">Acciones</th>
-                      </tr>
-                    </thead>
+                  <table className="min-w-full table-fixed divide-y divide-borde-claro">
+                    <colgroup>
+                      <col className="w-[10%]" />   {/* Cantidad: 10% */}
+                      <col className="w-[50%]" />   {/* Nombre: 60% */}
+                      <col className="w-[10%]" />   {/* Estado: 20% */}
+                      <col className="w-[30%]" />   {/* Subtotal/Acciones: 30% */}
+                    </colgroup>
                     <tbody>
                       {batch.items.map(item => {
                         let rowClass = '';
@@ -379,37 +407,68 @@ const ViewTable = () => {
                         if (item.status === 'cancelled') rowClass = 'text-insignia-cancelado-texto line-through';
 
                         return (
-                          <tr key={item.id} className={rowClass}>
+                          <tr key={item.id} className={`${rowClass} border-b border-borde-claro last:border-b-0`}>
+                            <td className="px-2 py-1">{item.quantity}x</td>
                             <td className="px-2 py-1">
                               {item.name}
                               {item.notes && <div className="text-xs text-texto-claro">{item.notes}</div>}
                             </td>
-                            <td className="px-2 py-1">{item.quantity}</td>
-                            <td className="px-2 py-1">${item.price}</td>
-                            <td className="px-2 py-1">
-                              <Badge status={item.status} />
+                            <td className="px-2 py-1 text-center">
+                              {/* Estado con íconos SVG */}
+                              {item.status === 'pending' && (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-insignia-pendiente-texto mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Pendiente">
+                                  <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                                  <polyline points="12 6 12 12 16 14" strokeWidth={2} />
+                                </svg>
+                              )}
+                              {item.status === 'ready' && (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-insignia-listo-texto mx-auto" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="10" cy="10" r="8" />
+                                </svg>
+                              )}
+                              {item.status === 'delivered' && (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-insignia-entregado-texto mx-auto" viewBox="0 0 20 20" fill="currentColor" title="Entregado">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                              {item.status === 'cancelled' && (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-insignia-cancelado-texto mx-auto" viewBox="0 0 20 20" fill="currentColor" title="Cancelado">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                              )}
                             </td>
                             <td className="px-2 py-1">
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2 justify-end items-center">
                                 {/* Botón Entregar (solo para productos listos) */}
                                 {item.status === 'ready' && (
-                                  <button
+                                  <Button
+                                    variant="success"
                                     onClick={() => handleDeliverItem(order.id, batch.batchId, item.id)}
                                     disabled={isLocked || !isOnline}
-                                    className="text-texto-exito hover:text-texto-exito-hover text-sm font-medium disabled:opacity-50"
+                                    className="text-sm py-1 px-2"
+                                    title="Entregar"
                                   >
-                                    Entregar
-                                  </button>
+                                    {/* Ícono de check */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  </Button>
                                 )}
                                 {/* Botón Cancelar (para productos pendientes o listos, excepto prepagados) */}
                                 {(item.status === 'pending' || item.status === 'ready') && !isPrepaid && (
-                                  <button
+                                  <Button
+                                    variant="cancel"
                                     onClick={() => handleCancelItem(order.id, batch.batchId, item.id)}
                                     disabled={isLocked || !isOnline}
-                                    className="text-acento hover:text-acento-hover text-sm font-medium disabled:opacity-50"
+                                    className="text-sm py-1 px-2"
+                                    title="Cancelar"
                                   >
-                                    Cancelar
-                                  </button>
+                                    {/* Ícono de X */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                  </Button>
                                 )}
                               </div>
                             </td>

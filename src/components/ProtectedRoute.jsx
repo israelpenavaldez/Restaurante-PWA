@@ -74,7 +74,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
           <p className="text-texto-claro mb-4">
             El restaurante no está abierto en este momento. Por favor, intenta más tarde.
           </p>
-          <Button onClick={handleLogout} variant="primary">
+          <Button onClick={handleLogout} variant="cancel">
             Cerrar sesión
           </Button>
         </Card>
@@ -93,7 +93,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
           <p className="text-texto-claro mb-4">
             Tu cuenta está en espera de ser activada por el administrador.
           </p>
-          <Button onClick={handleLogout} variant="primary">
+          <Button onClick={handleLogout} variant="cancel">
             Cerrar sesión
           </Button>
         </Card>

@@ -50,8 +50,8 @@ export default function PromptModal({ message, onConfirm, onCancel, defaultValue
           className="w-full p-2 border-b-2 border-borde bg-white rounded-t-md text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none transition mb-6"
         />
         <div className="flex justify-center gap-3">
-          <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
-          <Button variant="primary" onClick={handleConfirm}>Aceptar</Button>
+          <Button variant="cancel" onClick={onCancel}>Cancelar</Button>
+          <Button variant="success" onClick={handleConfirm}>Aceptar</Button>
         </div>
       </div>
     </div>

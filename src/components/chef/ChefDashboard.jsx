@@ -195,7 +195,7 @@ const ChefDashboard = () => {
               <span className="text-texto-claro font-medium">
                 {userData?.displayName || userData?.email}
               </span>
-              <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
+              <Button variant="cancel" onClick={handleLogout} className="text-sm py-1 px-3">
                 Cerrar sesión
               </Button>
             </div>

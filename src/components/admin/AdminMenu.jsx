@@ -105,16 +105,13 @@ const AdminMenu = () => {
     <div>
       {/* ===== CABECERA CON BOTÓN DE NUEVA CATEGORÍA ===== */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-display font-bold text-texto">Categorías del menú</h2>
+        <h2 className="text-2xl font-display font-bold text-texto">Categorías</h2>
         <div className="flex items-center gap-3">
           {isServiceOpen && (
             <span className="text-sm text-acento bg-acento/10 px-3 py-1 rounded-full">
               Servicio abierto: solo puede activar/desactivar
             </span>
           )}
-          <Button variant="success" onClick={handleNew} disabled={isServiceOpen}>
-            + Nueva categoría
-          </Button>
         </div>
       </div>
 
@@ -126,6 +123,15 @@ const AdminMenu = () => {
         onChange={(e) => setSearchTerm(e.target.value)}
         className="w-full p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-6 transition"
       />
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="primary" 
+          onClick={handleNew} 
+          disabled={isServiceOpen}
+        >
+          + Nueva categoría
+        </Button>
+      </div>
 
       {/* ===== CUADRÍCULA DE CATEGORÍAS ===== */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -135,7 +141,11 @@ const AdminMenu = () => {
               {/* Imagen de la categoría o placeholder */}
               <div className="w-32 h-32 bg-tarjeta-alt/30 flex items-center justify-center flex-shrink-0">
                 {category.imageUrl ? (
-                  <img src={category.imageUrl} alt={category.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={category.imageUrl} 
+                    alt={category.name} 
+                    className="w-full h-full object-cover" 
+                  />
                 ) : (
                   <span className="text-4xl">🍽️</span>
                 )}
@@ -143,46 +153,37 @@ const AdminMenu = () => {
 
               {/* Información y acciones de la categoría */}
               <div className="flex-1 p-4">
-                <h3 className="text-xl font-display font-bold text-texto mb-1">{category.name}</h3>
-                {category.description && (
-                  <p className="text-texto-claro text-sm mb-3">{category.description}</p>
-                )}
-                <div className="mt-2 flex gap-2">
-                  <button
-                    onClick={() => handleEdit(category.id)}
-                    className="text-acento hover:text-acento-hover font-medium text-sm transition"
-                  >
-                    {isServiceOpen ? 'Ver' : 'Editar'}
-                  </button>
-                  <button
-                    onClick={() => toggleCategoryActive(category.id, category.active)}
-                    className={`text-sm font-medium transition ${
-                      category.active
-                        ? 'text-texto-aviso hover:text-texto-aviso-hover'
-                        : 'text-texto-exito hover:text-texto-exito-hover'
-                    }`}
-                  >
-                    {category.active ? 'Desactivar' : 'Activar'}
-                  </button>
+                <div className="flex justify-center items-center mb-2">
+                  <h3 className="text-xl font-display font-bold text-texto">{category.name}</h3>
                 </div>
-              </div>
-            </div>
-
-            {/* Lista de variantes (máximo 5 visibles) */}
-            {category.items?.length > 0 && (
-              <div className="border-t border-borde-claro px-4 py-3 bg-tarjeta-alt/10">
-                <div className="flex flex-wrap gap-1 text-sm text-texto">
-                  {category.items.slice(0, 5).map(variant => (
-                    <span key={variant.id} className="bg-tarjeta-alt/30 px-2 py-0.5 rounded-full text-xs">
-                      {variant.name} (${variant.price})
-                    </span>
-                  ))}
-                  {category.items.length > 5 && (
-                    <span className="text-xs text-texto-claro">+{category.items.length - 5} más</span>
+                <div className="mt-2 gap-2 items-center justify-between">
+                  {/* Lista de variantes (máximo 5 visibles) */}
+                  {category.items?.length > 0 && (
+                    <div className="border-t border-borde-claro px-4 py-3 bg-tarjeta-alt/10">
+                      <div className="flex flex-col gap-1 text-sm text-texto">
+                        {category.items.slice(0, 5).map(variant => (
+                          <span key={variant.id} className="bg-tarjeta-alt/30 px-2 py-0.5 rounded-full text-xs">
+                            {variant.name}
+                          </span>
+                        ))}
+                        {category.items.length > 5 && (
+                          <span className="text-xs text-texto-claro">+{category.items.length - 5} más</span>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
-            )}
+            </div>
+            <div className="flex justify-center items-center p-4 border-t border-borde-claro bg-tarjeta-alt/10">
+              <Button
+                variant="warning"
+                onClick={() => handleEdit(category.id)}
+                className="font-medium text-sm transition"
+              >
+                {isServiceOpen ? 'Ver' : 'Editar'}
+              </Button>
+            </div>
           </Card>
         ))}
       </div>

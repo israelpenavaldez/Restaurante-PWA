@@ -293,37 +293,30 @@ const AdminReports = () => {
       {/* ===== CABECERA CON BOTONES DE EXPORTACIÓN ===== */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-display font-bold text-texto">Reportes de ventas</h2>
-        <div className="flex gap-2">
-          <Button variant="success" onClick={exportToExcel}>Exportar Excel</Button>
-          <Button variant="primary" onClick={exportToPDF}>Exportar PDF</Button>
-        </div>
       </div>
 
       {/* ===== FILTROS DE PERÍODO ===== */}
-      <Card className="mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div>
-            <label className="block font-medium text-texto mb-1">Tipo</label>
-            <div className="flex gap-1">
-              {['day', 'week', 'month'].map(opt => (
-                <button
-                  key={opt}
-                  onClick={() => setFilter(opt)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-                    filter === opt
-                      ? 'bg-acento text-texto-inverso'
-                      : 'bg-tarjeta-alt/30 text-texto hover:bg-tarjeta-alt/50'
-                  }`}
-                >
-                  {opt === 'day' ? 'Día' : opt === 'week' ? 'Semana' : 'Mes'}
-                </button>
-              ))}
-            </div>
+      <Card className="mb-6 text-center">
+        <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+          {/* Botones de período */}
+          <div className="flex gap-1">
+            {['day', 'week', 'month'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => setFilter(opt)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  filter === opt
+                    ? 'bg-acento text-texto-inverso'
+                    : 'bg-tarjeta-alt/30 text-texto hover:bg-tarjeta-alt/50'
+                }`}
+              >
+                {opt === 'day' ? 'Día' : opt === 'week' ? 'Semana' : 'Mes'}
+              </button>
+            ))}
           </div>
+
+          {/* Selector de fecha */}
           <div>
-            <label className="block font-medium text-texto mb-1">
-              {filter === 'day' ? 'Fecha' : filter === 'week' ? 'Inicio de semana' : 'Mes'}
-            </label>
             {filter === 'day' && (
               <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
                 className="p-2 border-b-2 border-borde bg-white/80 rounded-t-md text-texto focus:border-acento focus:outline-none transition" />
@@ -338,13 +331,15 @@ const AdminReports = () => {
             )}
           </div>
         </div>
+
+        {/* Texto del período seleccionado */}
         <p className="text-sm text-texto-claro mt-3">
           Período: {startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
         </p>
       </Card>
 
       {/* ===== TARJETAS DE MÉTRICAS PRINCIPALES ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card className="text-center">
           <h3 className="text-texto-claro text-sm uppercase tracking-wide">Ventas totales</h3>
           <p className="text-2xl font-display font-bold text-acento">${metrics.totalSales.toFixed(2)}</p>
@@ -366,7 +361,7 @@ const AdminReports = () => {
 
       {/* ===== ANÁLISIS DE PRODUCTOS ===== */}
       <Card className="mb-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-texto">Análisis de productos</h3>
           <div className="flex items-center gap-2">
             <span className="text-sm text-texto-claro">Ordenar por:</span>
@@ -415,6 +410,21 @@ const AdminReports = () => {
           </div>
         </div>
       </Card>
+
+      <div className="flex justify-end gap-4 mb-6">
+       <Button 
+          variant="primary" 
+          onClick={exportToExcel}
+        >
+          Exportar Excel
+        </Button>
+        <Button 
+          variant="primary" 
+          onClick={exportToPDF}
+        >
+          Exportar PDF
+        </Button>
+      </div>
 
       {/* ===== TABLA DE ÓRDENES DEL PERÍODO ===== */}
       <Card>

@@ -193,9 +193,12 @@ const AddProductToOrder = () => {
   return (
     <div className="max-w-6xl mx-auto p-4 bg-fondo min-h-screen">
       {/* ===== BOTÓN VOLVER ===== */}
-      <button onClick={() => navigate(`/view/${tableId}`)} className="text-acento hover:text-acento-hover font-medium mb-4 inline-flex items-center gap-1">
-        ← Volver
-      </button>
+      <Button 
+        variant="return"
+        onClick={() => navigate(`/view/${tableId}`)} 
+        className= "mb-6">
+          ← 
+      </Button>
 
       <h2 className="text-3xl font-display font-bold text-texto mb-2">Agregar productos - Mesa: {realTableNumber}</h2>
 
@@ -271,7 +274,7 @@ const AddProductToOrder = () => {
                 disabled={product.active === false || isLocked}
               />
               <Button
-                variant="primary"
+                variant="success"
                 onClick={() => addToTemp(product)}
                 className="w-full py-1"
                 disabled={product.active === false || isLocked}
@@ -307,8 +310,12 @@ const AddProductToOrder = () => {
 
       {/* ===== BOTÓN AGREGAR LOTE ===== */}
       <div className="flex justify-end">
-        <Button variant="success" onClick={handleSubmit} disabled={isLocked || !isOnline} className="px-8 py-3 text-lg">
-          {isLocked ? 'Agregando...' : 'Agregar lote'}
+        <Button 
+          variant="success" 
+          onClick={handleSubmit} 
+          disabled={isLocked || !isOnline} 
+          className="px-8 py-3 text-lg">
+            {isLocked ? 'Agregando...' : 'Agregar lote'}
         </Button>
       </div>
     </div>

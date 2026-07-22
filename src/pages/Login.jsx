@@ -130,7 +130,11 @@ const LoginView = () => {
                 className="w-full p-2 border-b-2 border-borde bg-transparent text-texto placeholder:text-texto-claro focus:border-acento focus:outline-none mb-4 transition-colors"
                 required
               />
-              <Button type="submit" disabled={loading} className="w-full">
+              <Button 
+                variant="success" 
+                disabled={loading} 
+                className="w-full"
+              >
                 {loading ? 'Enviando...' : 'Enviar enlace'}
               </Button>
             </form>
@@ -203,7 +207,11 @@ const LoginView = () => {
             />
           )}
 
-          <Button type="submit" disabled={loading} className="w-full mb-3">
+          <Button 
+            variant="success" 
+              disabled={loading} 
+              className="w-full mb-3"
+            >
             {loading ? 'Procesando...' : isLogin ? 'Ingresar' : 'Registrarse'}
           </Button>
         </form>

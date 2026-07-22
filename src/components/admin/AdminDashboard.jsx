@@ -16,6 +16,7 @@ import Button from '../ui/Button';
 const AdminDashboard = () => {
   // Pestaña activa actual
   const [activeTab, setActiveTab] = useState('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,49 +48,90 @@ const AdminDashboard = () => {
     { id: 'employees', label: 'Empleados' },
   ];
 
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-fondo">
       {/* ===== CABECERA ===== */}
       <div className="bg-tarjeta shadow-md border-b border-borde-claro">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4">
-            <h1 className="text-2xl font-display font-bold text-texto">
-              Panel de Administrador
-            </h1>
-            <div className="flex items-center justify-end space-x-4 mt-1">
-              <span className="text-texto-claro font-medium">
-                {userData?.displayName || userData?.email}
-              </span>
-              <Button variant="primary" onClick={handleLogout} className="text-sm py-1 px-3">
-                Cerrar sesión
+          <div className="flex justify-between items-center py-4">
+            <div className="flex justify-left items-center gap-3">
+              {/* Botón de menú lateral */}
+              <Button
+                variant="return"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="transition p-2 rounded-xl"
+                aria-label="Abrir menú"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               </Button>
+              <h1 className="text-2xl font-display font-bold text-texto">
+                Panel de Administrador
+              </h1>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ===== BARRA DE PESTAÑAS ===== */}
-      <div className="border-b border-borde-claro bg-tarjeta">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8 overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition ${
-                  activeTab === tab.id
-                    ? 'border-acento text-acento'
-                    : 'border-transparent text-texto-claro hover:text-texto hover:border-borde'
-                }`}
+      {/* ===== MENÚ LATERAL (OVERLAY) ===== */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          {/* Fondo oscuro */}
+          <div
+            className="fixed inset-0 bg-texto/30 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+          {/* Panel lateral */}
+          <div className="relative w-64 bg-tarjeta shadow-xl border-r border-borde-claro z-50 animate-slide-in-left">
+            <div className="flex flex-col px-6 py-4 border-b border-borde-claro">
+              <span className="text-texto-claro font-bold">
+                {userData?.displayName}
+              </span>
+              <span className="text-texto-claro text-sm">
+                {userData?.email}
+              </span>
+            </div>
+            <nav className="py-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`w-full text-left px-6 py-3 font-medium text-sm transition ${
+                    activeTab === tab.id
+                      ? 'bg-acento/10 text-acento border-r-4 border-acento'
+                      : 'text-texto-claro hover:bg-tarjeta-alt/20 hover:text-texto'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+            <div className="absolute bottom-0 w-full p-4 border-t border-borde-claro">
+              <Button 
+                variant="cancel" 
+                onClick={handleLogout} 
+                className="text-sm py-1 px-3"
               >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+                Cerrar sesión
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ===== CONTENIDO DE LA PESTAÑA ACTIVA ===== */}
+      {/* ===== CONTENIDO ===== */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'home' && <AdminHome />}
         {activeTab === 'tables' && <AdminTables />}
@@ -100,5 +142,6 @@ const AdminDashboard = () => {
     </div>
   );
 };
+
 
 export default AdminDashboard;

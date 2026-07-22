@@ -113,7 +113,7 @@ const TablesTab = ({ onOccupy, onView }) => {
               </div>
 
               {/* Botón para revisar la mesa */}
-              <Button variant="primary" onClick={() => onView(table.id)} className="w-full">
+              <Button variant="warning" onClick={() => onView(table.id)} className="w-full">
                 Revisar
               </Button>
             </div>

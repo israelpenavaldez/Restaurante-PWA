@@ -5,6 +5,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { getRealTotal, isOrderCompletelyCancelled } from '../../utils/helpers';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import Toggle from '../ui/Toggle';
 import { useAuth } from '../../context/AuthContext';
 
 /**
@@ -164,81 +165,27 @@ const AdminHome = () => {
       {/* ===== CABECERA CON BOTÓN DE SERVICIO ===== */}
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-display font-bold text-texto">Resumen del día</h2>
-        <Button
-          variant={metrics.isServiceOpen ? 'success' : 'primary'}
-          onClick={toggleServiceStatus}
+        <Toggle
+          enabled={metrics.isServiceOpen}
+          onChange={toggleServiceStatus}
+          label={metrics.isServiceOpen ? 'Servicio abierto' : 'Servicio cerrado'}
           disabled={updatingService}
-        >
-          {metrics.isServiceOpen ? 'Servicio abierto' : 'Servicio cerrado'}
-        </Button>
+        />
       </div>
 
       {/* ===== TARJETAS DE MÉTRICAS PRINCIPALES ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
         <Card className="text-center">
-          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Ventas del día</h3>
-          <p className="text-3xl font-display font-bold text-acento mt-2">${metrics.dailySales.toFixed(2)}</p>
-        </Card>
-        <Card className="text-center">
-          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Órdenes completadas</h3>
-          <p className="text-3xl font-display font-bold text-texto mt-2">{metrics.ordersAttended}</p>
+          <h3 className="text-2xl text-texto font-display uppercase tracking-wide">Ventas del día</h3>
+          <p className="text-2xl text-acento font-body font-medium mt-2">${metrics.dailySales.toFixed(2)}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Ticket promedio</h3>
-          <p className="text-3xl font-display font-bold text-texto mt-2">${metrics.averageTicket.toFixed(2)}</p>
+          <h3 className="text-2xl text-texto font-display uppercase tracking-wide">Órdenes completadas</h3>
+          <p className="text-2xl text-acento font-body font-medium mt-2">{metrics.ordersAttended}</p>
         </Card>
         <Card className="text-center">
-          <h3 className="text-texto-claro text-sm font-medium uppercase tracking-wide">Mesas ocupadas</h3>
-          <p className="text-3xl font-display font-bold text-texto mt-2">{metrics.occupiedTables} / {metrics.totalTables}</p>
-        </Card>
-      </div>
-
-      {/* ===== PRODUCTOS MÁS VENDIDOS Y RESUMEN RÁPIDO ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-display font-bold text-texto">5 productos más vendidos (hoy)</h3>
-            {/* Selector de ordenamiento */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-texto-claro">Ordenar por:</span>
-              <select
-                value={productSortBy}
-                onChange={(e) => setProductSortBy(e.target.value)}
-                className="p-1 border-b-2 border-borde bg-transparent text-texto text-sm focus:border-acento focus:outline-none"
-              >
-                <option value="quantity">Cantidad</option>
-                <option value="total">Monto</option>
-              </select>
-            </div>
-          </div>
-          {metrics.topProducts.length === 0 ? (
-            <p className="text-texto-claro">No hay ventas registradas hoy.</p>
-          ) : (
-            <ul className="space-y-2">
-              {metrics.topProducts.map((product, idx) => (
-                <li key={idx} className="flex justify-between items-center border-b border-borde-claro pb-2">
-                  <div>
-                    <span className="font-medium text-texto">{product.name}</span>
-                    <span className="text-xs text-texto-claro ml-1">({product.category})</span>
-                  </div>
-                  <div className="text-right text-sm">
-                    <span className="font-medium">{product.quantity} uds</span>
-                    <span className="text-texto-claro ml-2">${product.total.toFixed(2)}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card>
-          <h3 className="text-lg font-display font-bold text-texto mb-4">Resumen rápido</h3>
-          <p className="text-texto-claro">
-            Las métricas detalladas se encuentran en la pestaña <strong className="text-texto">Reportes</strong>.
-          </p>
-          <p className="text-texto-claro mt-2">
-            El análisis completo de productos está disponible en la exportación a PDF.
-          </p>
+          <h3 className="text-2xl text-texto font-display uppercase tracking-wide">Mesas ocupadas</h3>
+          <p className="text-2xl text-acento font-body font-medium mt-2">{metrics.occupiedTables} / {metrics.totalTables}</p>
         </Card>
       </div>
     </div>
