@@ -48,7 +48,7 @@ export const generateTicketHTML = (order, paymentMethod) => {
 
     @media print {
       body {
-        font-size: 12pt;
+        font-size: 14pt;
       }
     }
 
